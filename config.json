@@ -1,0 +1,12 @@
+{
+    "filter": {
+        "sample_rate": 32,
+        "lowcut": 0.15,
+        "highcut": 15,
+        "order": 4
+    },
+    "ppg_processing": {
+        "threshold": 10000,
+        "min_duration": 30
+    }
+}
