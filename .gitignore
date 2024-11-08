@@ -1,8 +1,9 @@
 # project folders
 data/*
+__pycache__
 
 # Byte-compiled / optimized / DLL files
-__pycache__/
+*/__pycache__/*
 *.py[cod]
 *$py.class
 
