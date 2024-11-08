@@ -1,5 +1,5 @@
 from .polar_verity_loader import PolarVerityLoader
-from .corsano_2872B_loader import Corsano2872bLoader
+from .corsano_2872b_loader import Corsano2872bLoader
 
 class DataLoaderFactory:
 	@staticmethod
@@ -9,4 +9,4 @@ class DataLoaderFactory:
 		elif device == 'corsano-2872b' and sensor_type == 'PPG':
 			return Corsano2872bLoader()
 		else: 
-			raise ValueError(f"Unsupported device {devoce} or sensor type {sensor_type}")	
+			raise ValueError(f"Unsupported device {device} or sensor type {sensor_type}")	

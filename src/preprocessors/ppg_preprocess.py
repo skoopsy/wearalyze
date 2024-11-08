@@ -11,8 +11,8 @@ class PPGPreProcessor:
 	def create_thresholded_sections(self):
 		"""Identify valid sections of data based on threshold."""
 		self.data['timestamp'] = pd.to_datetime(self.data['timestamp'], unit='ms')
-		threshold = self.config['ppg_processing']['threshold']
-		min_duration = self.config['ppg_processing']['min_duration']
+		threshold = self.config['ppg_preprocessing']['threshold']
+		min_duration = self.config['ppg_preprocessing']['min_duration']
 		
 		# Mark sections above threshold
 		self.data['above_threshold'] = self.data['value'] > threshold

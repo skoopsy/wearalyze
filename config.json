@@ -1,8 +1,8 @@
 {
-	"date_source":{
-		"device": "corsano2872b",
+	"data_source":{
+		"device": "corsano-2872b",
 		"sensor_type": "PPG",
-		"file_paths": ["data/'corsano2872b_ppg_green.csv"]
+		"file_paths": ["data/corsano2872b_ppg_green.csv"]
 	},
     "filter": {
         "sample_rate": 32,
@@ -10,7 +10,7 @@
         "highcut": 15,
         "order": 4
     },
-    "ppg_processing": {
+    "ppg_preprocessing": {
         "threshold": 10000,
         "min_duration": 30
     }

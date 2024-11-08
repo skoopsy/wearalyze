@@ -11,5 +11,5 @@ class PolarVerityLoader(BaseLoader):
 			
 			data_frams.append(data)
 
-		return pd.concat((data_frames, ignore_index=True)
+		return pd.concat(data_frames, ignore_index=True)
 		
