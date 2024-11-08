@@ -1,4 +1,9 @@
 {
+	"date_source":{
+		"device": "corsano2872b",
+		"sensor_type": "PPG",
+		"file_paths": ["data/'corsano2872b_ppg_green.csv"]
+	},
     "filter": {
         "sample_rate": 32,
         "lowcut": 0.15,
