@@ -1,5 +1,5 @@
 import json
-from src.utils.arg_parser import get_arguments
+from utils.arg_parser import get_arguments
 
 def load_config_file(config_path):
 	""" Loads config setting from JSON file """
@@ -16,7 +16,7 @@ def apply_arg_overrides(config, args):
 	if args.device:
 		config['data_source']['device'] = args.device
 	if args.sensor_type:
-		config['data_source']['ensor_type'] = args.sensor_type
+		config['data_source']['sensor_type'] = args.sensor_type
 	if args.threshold:
 		config['ppg_preprocess']['threshold'] = args.threshold
 
