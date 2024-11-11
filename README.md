@@ -1,8 +1,7 @@
+A toolbox for analysing wearable signals, currently focused on PPG, Accelerometer for Cardiovascular pulse wave analyse via PPG.
 
-Modules:
-	- loaders - load and validate raw data (PPG, Accel, ecg...)
-	- preprocessing - filtering, noise reduction, artifact removal
-	- processing - feature extraction, trend analysis, event detection
-	- postprocessing - summary of stats, classficationm exporting results
-	- visuals - plots, time freq phase, hist
-	- exporters
+[![Ubuntu](https://github.com/skoopsy/wearalyze/actions/workflows/test-linux.yml/badge.svg)](https://github.com/skoopsy/wearalyze/actions/workflows/test-linux.yml)
+
+[![macOS](https://github.com/skoopsy/wearalyze/actions/workflows/test-macos.yml/badge.svg)](https://github.com/skoopsy/wearalyze/actions/workflows/test-macos.yml)
+
+[![Windows](https://github.com/skoopsy/wearalyze/actions/workflows/test-windows.yml/badge.svg)](https://github.com/skoopsy/wearalyze/actions/workflows/test-windows.yml)
