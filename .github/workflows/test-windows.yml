@@ -6,22 +6,22 @@ on:
 
 jobs:
   test:
-	runs-on: windows-latest
-	steps:
-	  - uses: actions/checkout@v2
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
       - name: Set up Python
-		uses: actions/setup-python@v2
-		with:
-		  python-version: '3.9'
-	  - name: Install dependencies
-		shell: bash
-		run: |
-		  python -m venv venv
-		  source venv/Scripts/activate
-		  pip install -e .
-		  pip install pytest
-	  - name: Run tests
-		shell: bash
-		run: |
-		  source venv/Scripts/activate
-		  pytest
+        uses: actions/setup-python@v2
+          with:
+          python-version: '3.9'
+      - name: Install dependencies
+        shell: bash
+        run: |
+          python -m venv venv
+          source venv/Scripts/activate
+          pip install -e .
+          pip install pytest
+      - name: Run tests
+        shell: bash
+        run: |
+          source venv/Scripts/activate
+          pytest
