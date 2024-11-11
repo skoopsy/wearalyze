@@ -9,7 +9,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: [3.9]
+        python-version: [3.7, 3.8, 3.9]
     runs-on: ${{ matrix.os }}
     
     steps:
@@ -19,22 +19,16 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
-      shell: bash
-	  run: |
-        python -m venv venv
+      run: |
         if [ "$RUNNER_OS" == "Windows" ]; then
-          .\venv\Scripts\activate
+          python -m venv venv
         else
-          source venv/bin/activate
+          python3 -m venv venv
         fi
+        . venv/bin/activate
         pip install -e .
         pip install pytest
     - name: Run tests
-	  shell: bash
       run: |
-        if %RUNNER_OS% == Windows (
-          .\venv\Scripts\activate
-        ) else (
-          source venv/bin/activate
-        )
+        . venv/bin/activate
         pytest
