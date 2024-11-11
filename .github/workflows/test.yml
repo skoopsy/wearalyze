@@ -30,9 +30,9 @@ jobs:
         pip install pytest
     - name: Run tests
       run: |
-        if [ "$RUNNER_OS" == "Windows" ]; then
+        if %RUNNER_OS% == Windows (
           .\venv\Scripts\activate
-        else
+        ) else (
           source venv/bin/activate
-        fi
+        )
         pytest
