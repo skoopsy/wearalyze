@@ -19,24 +19,23 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
+      shell: bash
       run: |
+        python -m venv venv
         if [[ "$RUNNER_OS" == "Windows" ]]; then
-          python -m venv venv
-          venv\Scripts\activate
+          source venv/Scripts/activate
         else
-          python3 -m venv venv
           source venv/bin/activate
         fi
         pip install -e .
         pip install pytest
-      shell: bash
     - name: Run tests
+      shell: bash
       run: |
         if [[ "$RUNNER_OS" == "Windows" ]]; then
-          venv\Scripts\activate
+          source venv/Scripts/activate
         else
           source venv/bin/activate
         fi
         pytest
-      shell: bash
 
