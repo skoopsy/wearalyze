@@ -11,7 +11,7 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
         python-version: [3.9]
     runs-on: ${{ matrix.os }}
-    
+
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python
@@ -20,17 +20,23 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
-        if ["$RUNNER_OS" == "Windows"] ; then
+        if [[ "$RUNNER_OS" == "Windows" ]]; then
           python -m venv venv
+          venv\Scripts\activate
         else
           python3 -m venv venv
+          source venv/bin/activate
         fi
-        . venv/bin/activate
         pip install -e .
         pip install pytest
-	  shell: bash
+      shell: bash
     - name: Run tests
       run: |
-        . venv/bin/activate
+        if [[ "$RUNNER_OS" == "Windows" ]]; then
+          venv\Scripts\activate
+        else
+          source venv/bin/activate
+        fi
         pytest
-	  shell: bash
+      shell: bash
+
