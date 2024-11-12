@@ -20,6 +20,8 @@ jobs:
           source venv/Scripts/activate
           pip install -e .
           pip install pytest
+          pip install pandas
+          pip install scipy
       - name: Run tests
         shell: bash
         run: |
