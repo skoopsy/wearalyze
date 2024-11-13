@@ -23,8 +23,14 @@ def main():
 	sections = preprocessor.create_thresholded_sections()
 	filtered_sections = preprocessor.filter_cheby2(sections)
 	
-	# Plot sections
+	# Plot entire compliance sections
 	plot_ppg_sections_vs_time(filtered_sections)
+	
+	# Segment into individual pulse waves
+	#beat_detect_msptd()
+	
+	# Run Signal quality indicies
+		
 
 if __name__ == "__main__":
 	main()
