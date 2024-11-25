@@ -30,7 +30,7 @@ def main():
     #plot_ppg_sections_vs_time(filtered_sections)
 
     # In place of for loop or vectorisation
-    section = filtered_sections[-1].filtered_value * -1
+    section = filtered_sections[-1].filtered_value * -1 # *-1 to invert signal to detect troughs
 
     # Run heart beat detector
     beat_detector = 'ampd'
@@ -55,7 +55,7 @@ def main():
         start_idx = peaks[i]
         end_idx = peaks[i+1]
         beat = section.iloc[start_idx:end_idx].copy()
-        beats.append(beat*-1)    
+        beats.append(beat*-1) # Flip the beat back the right way up    
 
     import matplotlib.pyplot as plt
     plt.plot(beats[100])
