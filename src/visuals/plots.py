@@ -56,3 +56,18 @@ def plot_scaleogram(scaleogram, title='Scaleogram'):
     plt.ylabel('Scale')
     plt.colorbar(label='Local Max/Min')
     plt.show()
+
+def plot_lms(lms):
+    return None
+
+def plot_signal_detected_peaks(signal, peaks, beat_detector):
+    plt.figure(figsize=(14, 6))
+    plt.plot(signal, label='Original Signal Section')
+    plt.plot(signal.iloc[peaks], 'ro', label='Detected Peaks')
+    plt.title(f'Raw Signal with Detected Peaks ({beat_detector})')
+    plt.xlabel('Index')
+    plt.ylabel('Amplitude')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+

@@ -1,9 +1,11 @@
-from src.loaders.config_loader import get_config 
+from src.loaders.config_loader import get_config
 from src.loaders.loader_factory import DataLoaderFactory
 
 from src.preprocessors.ppg_preprocess import PPGPreProcessor
-from src.processors.beat_detector_MSPTD import beat_detect_msptd
-from src.visuals.plots import plot_ppg_sections_vs_time, plot_detected_inflections, plot_scaleogram
+from src.processors.beat_detector_msptd import beat_detect_msptd
+from src.processors.beat_detector_ampd import peak_detect_ampd
+
+from src.visuals.plots import plot_ppg_sections_vs_time, plot_detected_inflections, plot_scaleogram, plot_signal_detected_peaks
 
 def main():
     # Parse cmd line args and load config
@@ -13,7 +15,7 @@ def main():
     file_paths = config['data_source']['file_paths']
     device = config['data_source']['device']
     sensor_type = config['data_source']['sensor_type']
-    threshold = config['ppg_preprocessing']['threshold']	
+    threshold = config['ppg_preprocessing']['threshold']
 
     # Load data
     loader = DataLoaderFactory.get_loader(device, sensor_type)
@@ -27,16 +29,28 @@ def main():
     # Plot entire compliance sections
     #plot_ppg_sections_vs_time(filtered_sections)
 
-    # Segment into individual pulse waves
-    peaks, troughs, maximagram, minimagram = beat_detect_msptd(filtered_sections[10], 'filtered_value',1000)
-    
-    plot_detected_inflections(filtered_sections[0], peaks, troughs)
-    plot_scaleogram(maximagram, 'Local maxima scaleogram')
-    #plot_scaleogram(minimagram, 'Local minima scaleogram')
+    # In place of for loop or vectorisation
+    section = filtered_sections[-1].filtered_value
+
+    beat_detector = 'ampd'
+    plot = 1
+    match beat_detector:
+        case 'ampd':
+            breakpoint()
+            peaks, lms, gamma, lambda_scale = peak_detect_ampd(section)
+            if plot:
+                plot_signal_detected_peaks(section, peaks, beat_detector)
+        
+        case 'msptd': # Segment into individual pulse wave
+            peaks, troughs, maximagram, minimagram = beat_detect_msptd(section,
+                                                     'filtered_value',1000) 
+            if plot:
+                plot_detected_inflections(filtered_sections[0], peaks, troughs)
+                plot_scaleogram(maximagram, 'Local maxima scaleogram')
+                #plot_scaleogram(minimagram, 'Local minima scaleogram')
 
     # Run Signal quality indicies
 
 
 if __name__ == "__main__":
     main()
-

@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.signal import detrend
 
-def ampd(signal):
+def peak_detect_ampd(signal):
     """
     Automatic Multiscale Peak Detection for noisey periodic and quasia-periodic signals
      doi:10.3390/a5040588
