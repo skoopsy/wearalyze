@@ -19,7 +19,10 @@ def beat_detect_msptd(data, column, max_interval=None):
         numpy.ndarray: Local maxima scalogram
         numpy.ndarray: Local minima scalogram
     """
+
     start_time = time.time()
+    
+    ### Preprocess ### 
     # Handle dataframe
     if isinstance(data, pd.DataFrame):
         # If no col specified
@@ -30,16 +33,16 @@ def beat_detect_msptd(data, column, max_interval=None):
             column = numeric_columns[0]
         # Extract column as numpy array
         data = data[column].to_numpy()
-
     else:
         data = np.asarray(data, dtype=float)
 
-    # Mak sure is numpy array and convert to float
+    # Make sure is numpy array and convert to float
     #data = np.asarray(data, dtype=float)
 
     # Remove inf
     data = np.nan_to_num(data, nan=0.0, posinf=0.0, neginf=0.0)
 
+    ### Process ###
     # Input signal length
     N = len(data)
 
@@ -49,7 +52,7 @@ def beat_detect_msptd(data, column, max_interval=None):
     else:
         L = int(np.ceil(max_interval / 2)) - 1
 
-    # Detrend data by subtracting the mean
+    # Linear Detrending - subtracting the mean
     #mean_val = np.nanmean(data)
     #data[np.isnan(data)] = mean_val
     data = data - np.mean(data)
