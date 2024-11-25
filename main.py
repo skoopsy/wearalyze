@@ -30,13 +30,13 @@ def main():
     #plot_ppg_sections_vs_time(filtered_sections)
 
     # In place of for loop or vectorisation
-    section = filtered_sections[-1].filtered_value
+    section = filtered_sections[-1].filtered_value * -1
 
+    # Run heart beat detector
     beat_detector = 'ampd'
     plot = 1
     match beat_detector:
         case 'ampd':
-            breakpoint()
             peaks, lms, gamma, lambda_scale = peak_detect_ampd(section)
             if plot:
                 plot_signal_detected_peaks(section, peaks, beat_detector)
@@ -48,6 +48,18 @@ def main():
                 plot_detected_inflections(filtered_sections[0], peaks, troughs)
                 plot_scaleogram(maximagram, 'Local maxima scaleogram')
                 #plot_scaleogram(minimagram, 'Local minima scaleogram')
+
+    # Segment into individual beats
+    beats = []
+    for i in range(len(peaks) - 1):
+        start_idx = peaks[i]
+        end_idx = peaks[i+1]
+        beat = section.iloc[start_idx:end_idx].copy()
+        beats.append(beat*-1)    
+
+    import matplotlib.pyplot as plt
+    plt.plot(beats[100])
+    plt.show()
 
     # Run Signal quality indicies
 
