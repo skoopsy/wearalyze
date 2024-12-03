@@ -22,6 +22,8 @@ jobs:
           pip install pandas
           pip install scipy
       - name: Run tests
+        env:
+            PYTHONPATH: ${{ github.workspace }}
         run: |
           source venv/bin/activate
           pytest
