@@ -7,9 +7,9 @@ class PolarVerityLoader(BaseLoader):
 		for file_path in file_paths:
 			data = pd.read_csv(file_path)
 			
-			#TODO polar verity sense loading here, sort datatime out
-			
-			data_frams.append(data)
+			# Change timestamp from ns to ms for standardisation
+		    data['timestamp'] = data['sensor timestamp [ns]']/1000000	
+			data_frames.append(data)
 
 		return pd.concat(data_frames, ignore_index=True)
 		
