@@ -1,5 +1,5 @@
 import json
-from utils.arg_parser import get_arguments
+from src.utils.arg_parser import get_arguments
 
 def load_config_file(config_path):
 	""" Loads config setting from JSON file """
