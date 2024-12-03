@@ -24,6 +24,8 @@ jobs:
           pip install scipy
       - name: Run tests
         shell: bash
+        env:
+            PYTHONPATH: ${{ github.workspace }}
         run: |
           source venv/Scripts/activate
           pytest
