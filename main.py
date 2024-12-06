@@ -15,7 +15,7 @@ def main():
     device = config['data_source']['device']
     sensor_type = config['data_source']['sensor_type']
     threshold = config['ppg_preprocessing']['threshold']
-    beat_detector_name = config["processing"]["beat_detector"]
+    beat_detector_name = config["ppg_processing"]["beat_detector"]
 
     # Load data
     loader = DataLoaderFactory.get_loader(device, sensor_type)
