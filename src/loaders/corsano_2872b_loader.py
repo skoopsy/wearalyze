@@ -18,7 +18,7 @@ class Corsano2872bLoader(BaseLoader):
         "quality", "body_pose", "led_pd_pos", "offset",
         "exp", "led", "gain", "value"
         ]
-
+        
         for file_path in file_paths:
             data = pd.read_csv(file_path)
 
@@ -34,9 +34,8 @@ class Corsano2872bLoader(BaseLoader):
         """
         Standardise data from Corsano 2872b
         """
-            
         # Convert timestamp to datetime
-        #data['timestamp_ms'] = pd.to_datetime(data['timestamp'], unit='ms')
+        data['datetime'] = pd.to_datetime(data['timestamp'], unit='ms')
         
         # rename timestamp with units
         data['timestamp_ms'] = data['timestamp']

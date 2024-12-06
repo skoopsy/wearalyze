@@ -13,6 +13,7 @@ class PPGPreProcessor:
         self.data['timestamp'] = pd.to_datetime(self.data['timestamp'], unit='ms')
         threshold = self.config['ppg_preprocessing']['threshold']
         min_duration = self.config['ppg_preprocessing']['min_duration']
+        max_length = 60000
 
         # Mark sections above threshold
         self.data['above_threshold'] = self.data['ppg'] > threshold
@@ -26,9 +27,18 @@ class PPGPreProcessor:
             end_time = section['timestamp_ms'].iloc[-1]
             duration = end_time - start_time
 
-            if duration >= timedelta(seconds=min_duration):
+            #if duration >= timedelta(seconds=min_duration):
+            if duration >= min_duration*1000: # converted from s to ms
                 section['data_points'] = len(section)
-                valid_sections.append(section)
+                
+                if len(section) > max_length:
+                    for i in range(0, len(section), max_length):
+                        subsection = section.iloc[i:i + max_length].copy()
+                        valid_sections.append(subsection)
+                        print(f"Created subsection with {len(subsection)} data points")
+                else:
+                    valid_sections.append(section)
+
         return valid_sections
 
     def filter_cheby2(self, sections):
