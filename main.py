@@ -29,12 +29,12 @@ def main():
     # Plot entire compliance sections
     #plot_ppg_sections_vs_time(filtered_sections)
 
-    # In place of for loop or vectorisation
+    # In place of for loop or vectorisation of all sections, 1 for development
     section = filtered_sections[-1].filtered_value * -1 # *-1 to invert signal to detect troughs
 
     # Run heart beat detector
     beat_detector = 'ampd'
-    plot = 1
+    plot = True
     match beat_detector:
         case 'ampd':
             peaks, lms, gamma, lambda_scale = peak_detect_ampd(section)
@@ -60,9 +60,17 @@ def main():
     import matplotlib.pyplot as plt
     plt.plot(beats[100])
     plt.show()
+    
+    # Group beats into n sized segments
+    n_beat_segments = []
+    n = 10
+    for i in range(0, len(beats), n):
+        segment = pd.concat(beats[i:i + 10])
+        n_beat_segments.append(segment)
 
     # Run Signal quality indicies
-
+    for i, segment in enumerate(n_beat_segments):
+        print(f'Segment {i}, start:{segment['timestamp'].iloc[0]}')
 
 if __name__ == "__main__":
     main()

@@ -46,6 +46,7 @@ class PPGPreProcessor:
             # Run filter in forward and reverse to correct any phase delay
             filtered_values = filtfilt(b, a, section['value'])
             section['filtered_value'] = filtered_values
+            section = section[['timestamp','filtered_value']]
             filtered_sections.append(section)
 
         return filtered_sections
