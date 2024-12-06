@@ -13,5 +13,11 @@
     "ppg_preprocessing": {
         "threshold": 10000,
         "min_duration": 30
+    },
+    "ppg_processing": {
+        "beat_detector": "ampd",
+        "plot": true,
+        "plot_save": false,
+        "plot_save_path": "output/visuals"
     }
 }

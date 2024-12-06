@@ -1,14 +1,13 @@
-from src.processors.beat_detector_msptd import beat_detect_msptd
-from src.processors.beat_detector_ampd import peak_detect_ampd
+from src.processors.beat_detectors.ampd import AMPDDetector
+from src.processors.beat_detectors.msptd import MSPTDDetector
 
 class BeatDetectorFactory:
     @staticmethod
-    def get_beat_detector(detector_name):
+    def create(detector_name: str):
         detectors = {
-            'ampd': peak_detect_ampd,
-            'msptd': beat_detect_msptd,
+            "ampd": AMPDDetector(),
+            "msptd": MSPTDDetector(),
         }
-        
         if detector_name not in detectors:
-            raise ValueError(f"Invalid beat detector: {detector_name}")
+            raise ValueError(f"Unkniwn detector: {detector_name}")
         return detectors[detector_name]
