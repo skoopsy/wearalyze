@@ -20,6 +20,7 @@ def main():
     # Load data
     loader = DataLoaderFactory.get_loader(device, sensor_type)
     data = loader.load_data(file_paths)
+    data = loader.standardise(data)
 
     # Preprocess PPG data
     preprocessor = PPGPreProcessor(data, config)
