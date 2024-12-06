@@ -7,8 +7,9 @@ from preprocessors.ppg_preprocess import PPGPreProcessor
 def sample_data():
     data = pd.DataFrame({
         'timestamp': pd.date_range(start='2022-01-01 00:00:00', periods=100, freq='1s'),
-        'value': [10, 22, 21, 18, 25, 30, 60, 18, 15, 10] * 10
+        'ppg': [10, 22, 21, 18, 25, 30, 60, 18, 15, 10] * 10
     })
+    data['timestamp_ms'] = pd.to_datetime(data['timestamp'], unit='ms')
     return data
 
 @pytest.fixture

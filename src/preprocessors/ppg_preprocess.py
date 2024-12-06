@@ -15,15 +15,15 @@ class PPGPreProcessor:
         min_duration = self.config['ppg_preprocessing']['min_duration']
 
         # Mark sections above threshold
-        self.data['above_threshold'] = self.data['value'] > threshold
+        self.data['above_threshold'] = self.data['ppg'] > threshold
         self.data['section_id'] = (self.data['above_threshold'] != self.data['above_threshold'].shift()).cumsum()
         sections = [section_df for _, section_df in self.data[self.data['above_threshold']].groupby('section_id')]
 
         # Filter sections by duration
         valid_sections = []
         for section in sections:
-            start_time = section['timestamp'].iloc[0]
-            end_time = section['timestamp'].iloc[-1]
+            start_time = section['timestamp_ms'].iloc[0]
+            end_time = section['timestamp_ms'].iloc[-1]
             duration = end_time - start_time
 
             if duration >= timedelta(seconds=min_duration):
@@ -44,9 +44,9 @@ class PPGPreProcessor:
 
         for section in sections:
             # Run filter in forward and reverse to correct any phase delay
-            filtered_values = filtfilt(b, a, section['value'])
+            filtered_values = filtfilt(b, a, section['ppg'])
             section['filtered_value'] = filtered_values
-            section = section[['timestamp','filtered_value']]
+            section = section[['timestamp_ms','filtered_value']]
             filtered_sections.append(section)
 
         return filtered_sections

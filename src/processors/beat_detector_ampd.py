@@ -5,6 +5,8 @@ def peak_detect_ampd(signal):
     """
     Automatic Multiscale Peak Detection for noisey periodic and quasia-periodic signals
     doi:10.3390/a5040588
+    I have added some more robustness with edge case handling such as small or 
+    linear signals    
     
     args:
     signal - 1D signal to run ampd on (numpy.ndarray)
@@ -15,14 +17,23 @@ def peak_detect_ampd(signal):
     gamma - Vector used to find global minimum (numpy.ndarray)
     lambda_scale - Scale at which global minimum occurs (int)
     """
-
+    
+    # Handle small input signals:
+    if signal.size < 3:
+        return np.array([]), np.array([]), np.array([]), 0
+    
+    # AMPD algo
     detrended_signal = detrend(signal) # least mean square linear fit
     lms = compute_lms(detrended_signal) # Local Maxima Scalogram
     gamma = np.sum(lms, axis=1) # Row wise summation - sum of scalogram per scale
     lambda_scale = np.argmin(gamma) # Scale with lowest sum - most maximas (0 vals)
     lms = lms[:lambda_scale + 1, :] # Remove scales greater than lambda from lms
     sigma = np.std(lms, axis=0) # Column-wise std deviation - continuity between scales
-    peaks = np.where(sigma == 0)[0] # Select where std dev is zero! (maximas are 0s... smort)
+    peaks = np.where(sigma == 0)[0] # Select where std dev is zero! maximas are 0s - smort)
+    
+    # Handle linear signal
+    if lambda_scale == 0 or np.all(gamma > 0):
+        return np.array([]), lms, gamma, lambda_scale
 
     return peaks, lms, gamma, lambda_scale
 
