@@ -2,7 +2,10 @@ from src.loaders.config_loader import get_config
 from src.loaders.loader_factory import DataLoaderFactory
 
 from src.preprocessors.ppg_preprocess import PPGPreProcessor
+
 from src.processors.beat_detectors.factory import BeatDetectorFactory
+from src.processors.sqi.beat_organiser import BeatOrganiser
+from src.processors.sqi.factory import SQIFactory
 
 from src.visuals.plots import plot_ppg_sections_vs_time, plot_detected_inflections, plot_scaleogram, plot_signal_detected_peaks
 
@@ -58,10 +61,30 @@ def main():
         ]
         all_beats.extend(beats)
         print(f"Finished beat detection for section {i+1} / {len(filtered_sections)}")    
-    # Visualise example beat
-    plt.plot(all_beats[100])
-    plt.show()
+        
+        # TO SPEED UP DEVELOPMENT, REMOVE IN PROD
+        if i == 2:
+            break
 
+    # Visualise example beat
+    #plt.plot(all_beats[100])
+    #plt.show()
+
+    # Organise beats into n-beat segments
+    n = 10
+    organiser = BeatOrganiser(group_size=n)
+    n_beat_segments = organiser.group_n_beats(all_beats)
+    
+    # Chose SQI    
+    sqi_type = "bpm_plausible"
+    sqi = SQIFactory.create_sqi(sqi_type)
+
+    # Compute SQI
+    sqi_results = [sqi.compute(segment) for segment in n_beat_segments]
+    breakpoint()
+    #print(f"{len(sqi_results)} , {sqi_results[0]}") 
+
+"""
     # Group beats into n-sized segments
     n = 10
     n_beat_segments = [
@@ -71,6 +94,6 @@ def main():
     # Run Signal quality indicies
     for i, segment in enumerate(n_beat_segments):
         print(f'Segment {i}, start:{segment['timestamp'].iloc[0]}')
-
+"""
 if __name__ == "__main__":
     main()
