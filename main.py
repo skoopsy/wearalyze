@@ -7,7 +7,11 @@ from src.processors.beat_detectors.factory import BeatDetectorFactory
 from src.processors.sqi.beat_organiser import BeatOrganiser
 from src.processors.sqi.factory import SQIFactory
 
-from src.visuals.plots import plot_ppg_sections_vs_time, plot_detected_inflections, plot_scaleogram, plot_signal_detected_peaks
+from src.visuals.plots import (plot_ppg_sections_vs_time,
+                               plot_detected_inflections,
+                               plot_scaleogram,
+                               plot_signal_detected_peaks
+                              )
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -16,7 +20,8 @@ def main():
     # Parse cmd line args and load config
     config = get_config()
 
-    # Extract config params - should make config a struct/obj
+    # Extract config params
+    #TODO Make this a struct and abstact unloading away
     verbosity = config['outputs']['print_verbosity']
     file_paths = config['data_source']['file_paths']
     device = config['data_source']['device']
@@ -39,8 +44,7 @@ def main():
     sections = preprocessor.create_thresholded_sections() # Get sections where device was worn
     if verbosity > 1:
         for i, section in enumerate(sections):
-            print(f"Section {i} data points: {len(section)}")
-     
+            print(f"Section {i} data points: {len(section)}") 
     filtered_sections = preprocessor.filter_cheby2(sections)
     if verbosity >= 1:
         print("Finished bandpass filtering  sections")
@@ -48,27 +52,55 @@ def main():
     # Plot entire compliance sections
     #plot_ppg_sections_vs_time(filtered_sections)
 
-    # Instantiate beat detector
+    # Detect beats
     beat_detector = BeatDetectorFactory.create(beat_detector_name)
-    
     all_beats = []
+    peak_indices = []
+    
     # Process each section
     for i, section in enumerate(filtered_sections):
-        signal = section.filtered_value * -1 # Invert sig for trough detection 
-        
+                
         # Detect "troughs"
+        signal = section.filtered_value * -1 # Invert sig for trough detection 
+ 
         detector_results = beat_detector.detect(signal)
+        troughs = detector_results["peaks"]
+
+        # Segment into individual beats (Assume trough to trough is 1 beat)
+        for j in range(len(troughs) - 1 ):
+            start, end = troughs[j], troughs[j + 1]
+            beat = signal.iloc[start:end].copy() * -1
+            all_beats.append(beat)
+            
+            # Find main peak per beat (remember it is inverted, so finding min)
+            #TODO Set option to use basic idxmin OR use ampd again as idxmin might not be robust to noise 
+            peak_idx = signal.iloc[start:end].idxmin()
+            peak_indices.append(peak_idx)
+        """
+        # Plot a sample beat with the detected peak
+        plt.figure(figsize=(8, 4))
+        idx = len(all_beats) // 2  # Take the middle beat for plotting
+        beat_to_plot = all_beats[idx]
+        peak_idx_to_plot = peak_indices[idx]
+
+        # Plot the beat
+        plt.plot(beat_to_plot.index, beat_to_plot, label="Beat Segment")
+        # Highlight the peak
+        plt.scatter(
+            peak_idx_to_plot, beat_to_plot.loc[peak_idx_to_plot], 
+            color="red", label="Detected Peak", zorder=5
+        )
+        plt.title("Example Beat with Detected Peak")
+        plt.xlabel("Sample Index")
+        plt.ylabel("PPG Signal Value")
+        plt.legend()
+        plt.grid(True)
+        plt.show()
+        """
+
         if verbosity >= 1:
-            print(f"Beats detected: {len(detector_results['peaks'])}")
-        peaks = detector_results["peaks"]
-        # Segment into individual beat (trough to trough is 1 beat)
-        beats = [
-            signal.iloc[peaks[i] : peaks[i+1]].copy() * -1
-            for i in range(len(peaks) -1)
-        ]
-        all_beats.extend(beats)
-        if verbosity >=1:
-            print(f"Finished beat detection for section {i+1} / {len(filtered_sections)}")    
+            print(f"Section {i+1} / {len(filtered_sections)}")
+ 
         
         #TODO TO SPEED UP DEVELOPMENT, REMOVE IN PROD
         if i == 1:
@@ -85,6 +117,7 @@ def main():
     # Chose SQI    
     sqi = SQIFactory.create_sqi(sqi_type)
 
+    breakpoint()
     # Compute SQI
     sqi_results = [sqi.compute(segment) for segment in n_beat_segments]
     breakpoint()
