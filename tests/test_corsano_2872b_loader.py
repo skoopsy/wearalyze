@@ -58,7 +58,7 @@ def test_standardise(temp_csv_file):
     expected_columns = [
         "timestamp", "date", "metric_id", "chunk_index",
         "quality", "body_pose", "led_pd_pos", "offset",
-        "exp", "led", "gain", "value", "timestamp_ms", "ppg"
+        "exp", "led", "gain", "value", "datetime", "timestamp_ms", "ppg"
     ]
     assert list(standardised_data.columns) == expected_columns, "Standardised columns should match expected structure"
 

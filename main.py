@@ -68,7 +68,6 @@ def main():
         pd.concat(all_beats[i : i + n ])
         for i in range(0, len(all_beats), n)
     ]
-    breakpoint()
     # Run Signal quality indicies
     for i, segment in enumerate(n_beat_segments):
         print(f'Segment {i}, start:{segment['timestamp'].iloc[0]}')
