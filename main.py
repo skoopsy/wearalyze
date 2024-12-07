@@ -17,27 +17,33 @@ def main():
     config = get_config()
 
     # Extract config params - should make config a struct/obj
+    verbosity = config['outputs']['print_verbosity']
     file_paths = config['data_source']['file_paths']
     device = config['data_source']['device']
     sensor_type = config['data_source']['sensor_type']
     threshold = config['ppg_preprocessing']['threshold']
     beat_detector_name = config["ppg_processing"]["beat_detector"]
+    sqi_group_size = config["ppg_processing"]["sqi_group_size"]
+    sqi_type = config["ppg_processing"]["sqi_type"]
 
     # Load data
     loader = DataLoaderFactory.get_loader(device, sensor_type)
     data = loader.load_data(file_paths)
-    data = loader.standardise(data) 
-    print("Finished loading data")
+    data = loader.standardise(data)
+    if verbosity >= 1: 
+        print("Finished loading data")
 
     # Preprocess PPG data
     preprocessor = PPGPreProcessor(data, config)
     #TODO thresholding might not work for polar, only corsano:
     sections = preprocessor.create_thresholded_sections() # Get sections where device was worn
-    for section in sections:
-        print(f"{len(section)}")
+    if verbosity > 1:
+        for i, section in enumerate(sections):
+            print(f"Section {i} data points: {len(section)}")
      
     filtered_sections = preprocessor.filter_cheby2(sections)
-    print("Finished bandpass filtering  sections")
+    if verbosity >= 1:
+        print("Finished bandpass filtering  sections")
     
     # Plot entire compliance sections
     #plot_ppg_sections_vs_time(filtered_sections)
@@ -52,7 +58,8 @@ def main():
         
         # Detect "troughs"
         detector_results = beat_detector.detect(signal)
-        print(f"{len(detector_results)}")
+        if verbosity >= 1:
+            print(f"Beats detected: {len(detector_results['peaks'])}")
         peaks = detector_results["peaks"]
         # Segment into individual beat (trough to trough is 1 beat)
         beats = [
@@ -60,10 +67,11 @@ def main():
             for i in range(len(peaks) -1)
         ]
         all_beats.extend(beats)
-        print(f"Finished beat detection for section {i+1} / {len(filtered_sections)}")    
+        if verbosity >=1:
+            print(f"Finished beat detection for section {i+1} / {len(filtered_sections)}")    
         
-        # TO SPEED UP DEVELOPMENT, REMOVE IN PROD
-        if i == 2:
+        #TODO TO SPEED UP DEVELOPMENT, REMOVE IN PROD
+        if i == 1:
             break
 
     # Visualise example beat
@@ -71,12 +79,10 @@ def main():
     #plt.show()
 
     # Organise beats into n-beat segments
-    n = 10
-    organiser = BeatOrganiser(group_size=n)
+    organiser = BeatOrganiser(group_size=sqi_group_size)
     n_beat_segments = organiser.group_n_beats(all_beats)
     
     # Chose SQI    
-    sqi_type = "bpm_plausible"
     sqi = SQIFactory.create_sqi(sqi_type)
 
     # Compute SQI

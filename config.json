@@ -1,5 +1,8 @@
 {
-	"data_source":{
+	"outputs":{
+        "print_verbosity": 2
+    },
+    "data_source":{
 		"device": "corsano-2872b",
 		"sensor_type": "PPG",
 		"file_paths": ["data/corsano2872b_ppg_green.csv"]
@@ -18,6 +21,8 @@
         "beat_detector": "ampd",
         "plot": true,
         "plot_save": false,
-        "plot_save_path": "output/visuals"
+        "plot_save_path": "output/visuals",
+        "sqi_group_size": 10,
+        "sqi_type": "bpm_plausible"
     }
 }
