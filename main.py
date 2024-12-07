@@ -117,22 +117,10 @@ def main():
     # Chose SQI    
     sqi = SQIFactory.create_sqi(sqi_type)
 
-    breakpoint()
     # Compute SQI
     sqi_results = [sqi.compute(segment) for segment in n_beat_segments]
     breakpoint()
     #print(f"{len(sqi_results)} , {sqi_results[0]}") 
 
-"""
-    # Group beats into n-sized segments
-    n = 10
-    n_beat_segments = [
-        pd.concat(all_beats[i : i + n ])
-        for i in range(0, len(all_beats), n)
-    ]
-    # Run Signal quality indicies
-    for i, segment in enumerate(n_beat_segments):
-        print(f'Segment {i}, start:{segment['timestamp'].iloc[0]}')
-"""
 if __name__ == "__main__":
     main()
