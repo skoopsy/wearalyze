@@ -27,11 +27,8 @@ def test_load_data(temp_csv_file):
 
     # Verify structure of df
     expected_columns = [
-        "Phone timestamp", "sensor timestamp [ns]", "channel 0", "channel 1", "channel 2", "ambient", "timestamp"]
+        "Phone timestamp", "sensor timestamp [ns]", "channel 0", "channel 1", "channel 2", "ambient"]
     assert list(data.columns) == expected_columns
-    
-    # Verifyy that timestamps are converted correctly
-    assert data['timestamp'].iloc[0] == 763574775687.4501, "Timestamp conversion failed"
     
 def test_empty_file(tmp_path):
     empty_file = tmp_path / "empty.csv"
@@ -48,4 +45,24 @@ def test_invalid_file_format(tmp_path):
     loader = PolarVerityLoader()
     with pytest.raises(ValueError):
         loader.load_data([invalid_file])
-        
+
+def test_standardise(temp_csv_file):
+    loader = PolarVerityLoader()
+    raw_data = loader.load_data([temp_csv_file])
+    standardised_data = loader.standardise(raw_data)
+    
+    # Verify standardised data is in df
+    assert isinstance(standardised_data, pd.DataFrame), "Standardised data must be in padnas dataframe"
+    
+    # Verify standardised structure
+    expected_columns = ["Phone timestamp", "sensor timestamp [ns]",
+                        "channel 0", "channel 1", "channel 2", "ambient",
+                        "timestamp_ms", "ppg"
+                       ]
+    assert list(standardised_data.columns) == expected_columns, "Standardised data columns should match expected"
+    
+    # Verify standarised data content
+    assert len(standardised_data) == 4, "Standardised data should have same number of rows as original"
+    assert standardised_data["timestamp_ms"].iloc[0] == 763574775687.4501, "Timestamp must be converted to ms"
+    expected_mean = (-1426 + -4334 + 47386)/3
+    assert standardised_data['ppg'].iloc[0] == expected_mean, "Value should be the mean of channel 1, 2, and 3" 
