@@ -30,6 +30,7 @@ def main():
     beat_detector_name = config["ppg_processing"]["beat_detector"]
     sqi_group_size = config["ppg_processing"]["sqi_group_size"]
     sqi_type = config["ppg_processing"]["sqi_type"]
+    sqi_composite_details = config["ppg_processing"]["sqi_composite_details"]
 
     # Load data
     loader = DataLoaderFactory.get_loader(device, sensor_type)
@@ -114,11 +115,10 @@ def main():
     organiser = BeatOrganiser(group_size=sqi_group_size)
     n_beat_segments = organiser.group_n_beats(all_beats)
     
-    # Chose SQI    
-    sqi = SQIFactory.create_sqi(sqi_type)
-
-    # Compute SQI
+    # Compute SQI   
+    sqi = SQIFactory.create_sqi(sqi_type=sqi_type, sqi_composite_details=sqi_composite_details)
     sqi_results = [sqi.compute(segment) for segment in n_beat_segments]
+    
     breakpoint()
     #print(f"{len(sqi_results)} , {sqi_results[0]}") 
 

@@ -23,6 +23,10 @@
         "plot_save": false,
         "plot_save_path": "output/visuals",
         "sqi_group_size": 10,
-        "sqi_type": "bpm_plausible"
+        "sqi_type": "composite",
+        "sqi_composite_details":{
+            "sqi_types": ["bpm_plausible"],
+            "combine_strategy": "sequential_validation"
+        }
     }
 }

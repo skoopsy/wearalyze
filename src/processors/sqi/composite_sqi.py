@@ -1,7 +1,7 @@
 from src.processors.sqi.base import SQIBase
 
-class CompositeSQI(SQI):
-    def __init__(self, sqi_list, combine_strategy="avg"):
+class CompositeSQI(SQIBase):
+    def __init__(self, sqi_list, combine_strategy="sequential_validation"):
         """
         Initialise CompositeSQI with a list of SQIs and a strategy for
         combining them
@@ -29,7 +29,7 @@ class CompositeSQI(SQI):
         if self.combine_strategy == "average":
             return sum(sqi_results) / len(sqi_results)
         #TODO Revisit the output of this when api better understood
-        elif self.combine_strategy == "sequential_boolian_validation"
+        elif self.combine_strategy == "sequential_validation":
             if all(sqi_results) == True:
                 return 1.0 # Think about how to handle bool instead
             else:
