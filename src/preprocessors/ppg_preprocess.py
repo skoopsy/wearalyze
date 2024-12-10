@@ -42,7 +42,14 @@ class PPGPreProcessor:
         return valid_sections
 
     def filter_cheby2(self, sections):
-        """Apply Chebyshev Type II filter to each section."""
+        """
+        Apply Chebyshev Type II filter to each section of input data
+        
+        This outputs the result in two ways:
+         1. appendeds a new column to the input dataframe inplace called filtered_value
+         2. Returns a new dataframe with the filtered_values and timestamp on their own.
+        """
+
         sample_rate = self.config['filter']['sample_rate']
         lowcut = self.config['filter']['lowcut']
         highcut = self.config['filter']['highcut']

@@ -43,27 +43,31 @@ def main():
     preprocessor = PPGPreProcessor(data, config)
     #TODO thresholding might not work for polar, only corsano:
     sections = preprocessor.create_thresholded_sections() # Get sections where device was worn
+    
+    # Degbugging prints
     if verbosity > 1:
         for i, section in enumerate(sections):
             print(f"Section {i} data points: {len(section)}") 
-    filtered_sections = preprocessor.filter_cheby2(sections)
+    
+    # Apply bandpass filter - Creates new column 'filtered_value' in df
+    preprocessor.filter_cheby2(sections)
+    
+    # Debugging prints
     if verbosity >= 1:
         print("Finished bandpass filtering  sections")
     
     # Plot entire compliance sections
     #plot_ppg_sections_vs_time(filtered_sections)
 
-    # Detect beats
+    # Detect heart beats
     beat_detector = BeatDetectorFactory.create(beat_detector_name)
     all_beats = []
     peak_indices = []
     
-    # Process each section
-    for i, section in enumerate(filtered_sections):
+    for i, section in enumerate(sections):
                 
-        # Detect "troughs"
+        # Detect "troughs" - This method detects peaks, so the signal is inverted.
         signal = section.filtered_value * -1 # Invert sig for trough detection 
- 
         detector_results = beat_detector.detect(signal)
         troughs = detector_results["peaks"]
 
@@ -72,11 +76,14 @@ def main():
             start, end = troughs[j], troughs[j + 1]
             beat = signal.iloc[start:end].copy() * -1
             all_beats.append(beat)
-            
+            breakpoint() 
             # Find main peak per beat (remember it is inverted, so finding min)
             #TODO Set option to use basic idxmin OR use ampd again as idxmin might not be robust to noise 
             peak_idx = signal.iloc[start:end].idxmin()
             peak_indices.append(peak_idx)
+        
+        breakpoint()
+        #TODO move into visuals module:
         """
         # Plot a sample beat with the detected peak
         plt.figure(figsize=(8, 4))
@@ -98,7 +105,8 @@ def main():
         plt.grid(True)
         plt.show()
         """
-
+        
+        # Debugging prints
         if verbosity >= 1:
             print(f"Section {i+1} / {len(filtered_sections)}")
  
