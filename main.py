@@ -47,7 +47,7 @@ def main():
     # Degbugging prints
     if verbosity > 1:
         for i, section in enumerate(sections):
-            print(f"Section {i} data points: {len(section)}") 
+            print(f"Section {i+1} data points: {len(section)}") 
     
     # Apply bandpass filter - Creates new column 'filtered_value' in df
     preprocessor.filter_cheby2(sections)
@@ -63,57 +63,55 @@ def main():
     beat_detector = BeatDetectorFactory.create(beat_detector_name)
     all_beats = []
     peak_indices = []
+    annotated_sections = [] # all sections stored
     
-    for i, section in enumerate(sections):
-                
-        # Detect "troughs" - This method detects peaks, so the signal is inverted.
-        signal = section.filtered_value * -1 # Invert sig for trough detection 
+    for section_id, section in enumerate(sections):
+               
+        # Detect "troughs" - Detects peaks, so the signal is inverted.
+        signal = section.filtered_value * -1 # Invert sig for troughs
         detector_results = beat_detector.detect(signal)
         troughs = detector_results["peaks"]
-
-        # Segment into individual beats (Assume trough to trough is 1 beat)
-        for j in range(len(troughs) - 1 ):
-            start, end = troughs[j], troughs[j + 1]
-            beat = signal.iloc[start:end].copy() * -1
-            all_beats.append(beat)
-            breakpoint() 
-            # Find main peak per beat (remember it is inverted, so finding min)
-            #TODO Set option to use basic idxmin OR use ampd again as idxmin might not be robust to noise 
-            peak_idx = signal.iloc[start:end].idxmin()
-            peak_indices.append(peak_idx)
+    
+        # In-place modification initialisation
+        section['section_id'] = section_id # logging of which section
+        section['beat'] = -1 # Init at -1 incase row not allocated to beat
+        section['is_beat_peak'] = False
+     
+        # Annotate beats and peaks
+        for beat_id, (start, end) in enumerate(zip(troughs[:-1], troughs[1:])):
+            # Assign beat number to rows
+            section.loc[start:end, 'beat'] = beat_id
+            
+            # Find peak
+            beat_data = section.iloc[start:end]
+            peak_idx = beat_data['filtered_value'].idxmin()
+            
+            # Flag peak row for beat
+            section.loc[peak_idx, 'is_beat_peak'] = True
+            
+            print(f"{beat_id}") 
         
-        breakpoint()
-        #TODO move into visuals module:
-        """
-        # Plot a sample beat with the detected peak
-        plt.figure(figsize=(8, 4))
-        idx = len(all_beats) // 2  # Take the middle beat for plotting
-        beat_to_plot = all_beats[idx]
-        peak_idx_to_plot = peak_indices[idx]
-
-        # Plot the beat
-        plt.plot(beat_to_plot.index, beat_to_plot, label="Beat Segment")
-        # Highlight the peak
-        plt.scatter(
-            peak_idx_to_plot, beat_to_plot.loc[peak_idx_to_plot], 
-            color="red", label="Detected Peak", zorder=5
-        )
-        plt.title("Example Beat with Detected Peak")
-        plt.xlabel("Sample Index")
-        plt.ylabel("PPG Signal Value")
-        plt.legend()
-        plt.grid(True)
-        plt.show()
-        """
+        # Add annotated section to list
+        annotated_sections.append(section)
         
+        # Additonal storage of segmented beats incase needed
+        segmented_beats = [
+            section[section['beat'] == beat_id].copy() 
+            for beat_id in section['beat'].unique() if beat_id != -1
+        ]
+        all_beats.extend(segmented_beats)
+       
         # Debugging prints
         if verbosity >= 1:
-            print(f"Section {i+1} / {len(filtered_sections)}")
+            print(f"Section {section_id+1} / {len(sections)}")
  
-        
-        #TODO TO SPEED UP DEVELOPMENT, REMOVE IN PROD
-        if i == 1:
+        #TODO TO SPEED UP DEVELOPMENT, REMOVE IN PRO:
+        if section_id == 1:
             break
+ 
+    # Combine anotated sections into signal DataFrame 
+    combined_sections = pd.concat(annotated_sections, ignore_index=True)
+    breakpoint()
 
     # Visualise example beat
     #plt.plot(all_beats[100])
