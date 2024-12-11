@@ -43,7 +43,7 @@ def main():
     preprocessor = PPGPreProcessor(data, config)
     #TODO thresholding might not work for polar, only corsano:
     sections = preprocessor.create_thresholded_sections() # Get sections where device was worn
-    breakpoint() 
+    
     # Degbugging prints
     if verbosity > 1:
         for i, section in enumerate(sections):
@@ -51,7 +51,7 @@ def main():
     
     # Apply bandpass filter - Creates new column 'filtered_value' in df
     preprocessor.filter_cheby2(sections)
-    breakpoint()
+    
     # Debugging prints
     if verbosity >= 1:
         print("Finished bandpass filtering  sections")
@@ -63,6 +63,7 @@ def main():
     beat_detector = BeatDetectorFactory.create(beat_detector_name)
     all_beats = []
     peak_indices = []
+    trough_indices = []
     annotated_sections = [] # all sections stored
     
     for section_id, section in enumerate(sections):
@@ -71,9 +72,26 @@ def main():
         signal = section.filtered_value * -1 # Invert sig for troughs
         detector_results = beat_detector.detect(signal)
         troughs = detector_results["peaks"]
-        breakpoint() 
+        
+        # Store trough indices independently
+        trough_indices.extend(troughs) 
+
+        # Flag troughs inplace
+        section['is_beat_trough'] = False
+        
+        troughs_indices_realigned = section.iloc[troughs].index
+
+        section.loc[troughs_indices_realigned, 'is_beat_trough'] = True
+         
+        # Plot detected peaks
+        plot = False
+        if plot:
+            plt.plot(-1*signal.reset_index().filtered_value)
+            plt.scatter(troughs, -1*signal.reset_index().filtered_value[troughs], color='red')
+            plt.show()
+
         # In-place modification initialisation
-        section['section_id'] = section_id # logging of which section
+        #section['section_id'] = section_id # logging of which section
         section['beat'] = -1 # Init at -1 incase row not allocated to beat
         section['is_beat_peak'] = False
      
@@ -106,17 +124,41 @@ def main():
             print(f"Section {section_id+1} / {len(sections)}")
  
         #TODO TO SPEED UP DEVELOPMENT, REMOVE IN PRO:
-        if section_id == 1:
-            break
+        #REMEMBER: This is only processing the first 2 sections
+        # The other sections will still be present, just not processed!!
+        #if section_id == 1:
+        #    break
  
     # Combine anotated sections, may not need this atm 
     combined_sections = pd.concat(annotated_sections, ignore_index=True)
-    breakpoint()
+    
+    # Plot combined sections
+    plt.figure(figsize=(12, 6))
+
+    # Plot the filtered signal
+    plt.plot(combined_sections['filtered_value'], label='Filtered Signal', alpha=0.8)
+
+    # Mark the troughs (inverted peaks detected earlier)
+    troughs = combined_sections.loc[combined_sections['is_beat_trough'] == True]
+    plt.scatter(troughs.index, troughs['filtered_value'], color='blue', label='Troughs', s=15)
+
+    # Mark the peaks
+    peaks = combined_sections.loc[combined_sections['is_beat_peak'] == True]
+    plt.scatter(peaks.index, peaks['filtered_value'], color='red', label='Peaks', s=15)
+
+    # Add labels and legend
+    plt.title("Combined Sections with Detected Troughs and Peaks")
+    plt.xlabel("Index")
+    plt.ylabel("Filtered Value")
+    plt.legend()
+    plt.grid(alpha=0.3)
+    plt.show()
 
     # Visualise example beat
     #plt.plot(all_beats[100])
     #plt.show()
-
+    
+    breakpoint()
     # Organise beats into n-beat segments
     organiser = BeatOrganiser(group_size=sqi_group_size)
     n_beat_segments = organiser.group_n_beats_inplace(combined_sections)
