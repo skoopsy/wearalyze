@@ -43,7 +43,7 @@ def main():
     preprocessor = PPGPreProcessor(data, config)
     #TODO thresholding might not work for polar, only corsano:
     sections = preprocessor.create_thresholded_sections() # Get sections where device was worn
-    
+    breakpoint() 
     # Degbugging prints
     if verbosity > 1:
         for i, section in enumerate(sections):
@@ -51,7 +51,7 @@ def main():
     
     # Apply bandpass filter - Creates new column 'filtered_value' in df
     preprocessor.filter_cheby2(sections)
-    
+    breakpoint()
     # Debugging prints
     if verbosity >= 1:
         print("Finished bandpass filtering  sections")
@@ -71,7 +71,7 @@ def main():
         signal = section.filtered_value * -1 # Invert sig for troughs
         detector_results = beat_detector.detect(signal)
         troughs = detector_results["peaks"]
-    
+        breakpoint() 
         # In-place modification initialisation
         section['section_id'] = section_id # logging of which section
         section['beat'] = -1 # Init at -1 incase row not allocated to beat
@@ -109,7 +109,7 @@ def main():
         if section_id == 1:
             break
  
-    # Combine anotated sections into signal DataFrame 
+    # Combine anotated sections, may not need this atm 
     combined_sections = pd.concat(annotated_sections, ignore_index=True)
     breakpoint()
 
@@ -119,8 +119,10 @@ def main():
 
     # Organise beats into n-beat segments
     organiser = BeatOrganiser(group_size=sqi_group_size)
-    n_beat_segments = organiser.group_n_beats(all_beats)
+    n_beat_segments = organiser.group_n_beats_inplace(combined_sections)
     
+    breakpoint()
+
     # Compute SQI   
     sqi = SQIFactory.create_sqi(sqi_type=sqi_type, sqi_composite_details=sqi_composite_details)
     sqi_results = [sqi.compute(segment) for segment in n_beat_segments]

@@ -17,9 +17,11 @@ class PPGPreProcessor:
 
         # Mark sections above threshold
         self.data['above_threshold'] = self.data['ppg'] > threshold
+        
         self.data['section_id'] = (self.data['above_threshold'] != self.data['above_threshold'].shift()).cumsum()
+         
         sections = [section_df for _, section_df in self.data[self.data['above_threshold']].groupby('section_id')]
-
+        
         # Filter sections by duration
         valid_sections = []
         for section in sections:
@@ -38,6 +40,10 @@ class PPGPreProcessor:
                         print(f"Created subsection with {len(subsection)} data points")
                 else:
                     valid_sections.append(section)
+        
+        # Re-assign a new section_id after filtering out other sections
+        for i, section_df in enumerate(valid_sections, start=1):
+            section_df['section_id'] = i
 
         return valid_sections
 
