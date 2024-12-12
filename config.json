@@ -7,6 +7,14 @@
 		"sensor_type": "PPG",
 		"file_paths": ["data/corsano2872b_ppg_green.csv"]
 	},
+    "checkpoints":{
+        "use_checkpoint": true,
+        "directory": "data/checkpoints",
+        "checkpoint_id": 1,
+        "data_id": "corsano_ppg_g",
+        "checkpoint_save": true,
+        "checkpoint_load": false
+    },
     "filter": {
         "sample_rate": 32,
         "lowcut": 0.15,
