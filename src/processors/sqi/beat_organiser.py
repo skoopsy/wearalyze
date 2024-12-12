@@ -31,20 +31,14 @@ class BeatOrganiser:
         # Filter rows with valid beats
         valid_beats = beats_df[beats_df['beat'] != -1]
 
-        breakpoint()
-        
         # Sort items
         valid_beats.sort_values(by=['section_id','beat'], inplace=True)
         
         # Assign global index
         valid_beats['global_beat_index'] = range(len(valid_beats))
         
-        breakpoint()
-
         # Calculate group IDs based on group_size
         valid_beats['group_id'] = valid_beats['global_index'] // self.group_size
-        
-        breakpoint()
 
         # Check for groups spanning sections
         group_section_check = valid_beats.groupby('group_id')['section_id'].nunique()
@@ -53,8 +47,6 @@ class BeatOrganiser:
         invalid_groups = group_section_check[group_section_check > 1].index
         valid_beats.loc[valid_beats['group_id'].isin(invalid_groups), 'group_id'] = -1
         
-        breakpoint()
-
         return valid_beats 
         
 

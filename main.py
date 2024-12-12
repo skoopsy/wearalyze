@@ -155,13 +155,12 @@ def main():
     #plt.plot(all_beats[100])
     #plt.show()
     
-    breakpoint()
     # Organise beats into n-beat segments
     organiser = BeatOrganiser(group_size=sqi_group_size)
     n_beat_segments = organiser.group_n_beats_inplace(combined_sections)
-    
+   
     breakpoint()
-
+ 
     # Compute SQI   
     sqi = SQIFactory.create_sqi(sqi_type=sqi_type, sqi_composite_details=sqi_composite_details)
     sqi_results = [sqi.compute(segment) for segment in n_beat_segments]
