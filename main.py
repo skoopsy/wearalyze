@@ -16,6 +16,7 @@ from src.visuals.plots import (plot_ppg_sections_vs_time,
 import matplotlib.pyplot as plt
 import pandas as pd
 import os
+import pyarrow.feather as feather # Hopefully can remove in prod
 
 def main():
     # Parse cmd line args and load config
@@ -23,6 +24,7 @@ def main():
 
     # Extract config params
     #TODO Make this a struct and abstact unloading away
+    #TODO Create from_config() functions in each class to feed config in optionally
     verbosity = config['outputs']['print_verbosity']
     file_paths = config['data_source']['file_paths']
     device = config['data_source']['device']
@@ -32,16 +34,15 @@ def main():
     sqi_group_size = config["ppg_processing"]["sqi_group_size"]
     sqi_type = config["ppg_processing"]["sqi_type"]
     sqi_composite_details = config["ppg_processing"]["sqi_composite_details"]
-    use_checkpoint = config["checkpoints"]["use_checkpoint"]
+    load_from_checkpoint = config["checkpoints"]["load_from_checkpoint"]
     checkpoint_save = config["checkpoints"]["checkpoint_save"]
-    checkpoint_load = config["checkpoints"]["checkpoint_load"]
     checkpoint_dir = config["checkpoints"]["directory"]
     checkpoint_id = config["checkpoints"]["checkpoint_id"]
     checkpoint_data_id = config["checkpoints"]["data_id"]
 
     checkpoint_file = f"{checkpoint_dir}/{checkpoint_id}_{checkpoint_data_id}.feather"
     
-    if not use_checkpoint or not os.path.exists(checkpoint_file):
+    if not load_from_checkpoint:
 
         # Load data
         loader = DataLoaderFactory.get_loader(device, sensor_type)
@@ -146,9 +147,17 @@ def main():
         combined_sections = pd.concat(annotated_sections, ignore_index=True)
        
         # Create checkpoint - mostly for development
-        # Save df as arrow file
+        # Save df as arrow fil
+        if checkpoint_save:
+            combined_sections.reset_index(drop=True).to_feather(checkpoint_file)
+            print(f"Checkpoint created: combined_sections saved to {checkpoint_file}")
     
-     
+    
+    if load_from_checkpoint and checkpoint_id == 1:
+        combined_sections = pd.read_feather(checkpoint_file)
+    
+    #TODO Move this to visuals class as a plot method
+    """
     # Plot combined sections
     plt.figure(figsize=(12, 6))
     plt.plot(combined_sections['filtered_value'], label='Filtered Signal', alpha=0.8)
@@ -165,11 +174,13 @@ def main():
     plt.legend()
     plt.grid(alpha=0.3)
     plt.show()
-
+    """
     # Visualise example beat
     #plt.plot(all_beats[100])
     #plt.show()
     
+    breakpoint()
+
     # Organise beats into n-beat segments
     organiser = BeatOrganiser(group_size=sqi_group_size)
     n_beat_segments = organiser.group_n_beats_inplace(combined_sections)
