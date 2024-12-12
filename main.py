@@ -156,7 +156,7 @@ def main():
         if checkpoint_save:
             combined_sections.reset_index(drop=True).to_feather(checkpoint_file)
             print(f"Checkpoint created: combined_sections saved to {checkpoint_file}")
-     
+         
     if load_from_checkpoint and checkpoint_id == 1:
         combined_sections = pd.read_feather(checkpoint_file)
     
@@ -182,12 +182,11 @@ def main():
     # Visualise example beat
     #plt.plot(all_beats[100])
     #plt.show()
-   
 
     #TODO Main issue - Investigate this:
     # len(combined_sections[combined_sections.is_beat_peak] == True) : 3645
     # len(n_beat_segments[n_beat_segments.is_beat_peak] == True) : 453
-    
+    breakpoint()
     # Organise beats into n-beat segments
     organiser = BeatOrganiser(group_size=sqi_group_size)
     n_beat_segments = organiser.group_n_beats_inplace(combined_sections)
