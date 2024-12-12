@@ -29,16 +29,16 @@ class BeatOrganiser:
         """
         
         # Filter rows with valid beats
-        valid_beats = beats_df[beats_df['beat'] != -1]
+        valid_beats = beats_df[beats_df['beat'] != -1].copy()
 
         # Sort items
-        valid_beats.sort_values(by=['section_id','beat'], inplace=True)
+        valid_beats.sort_values(by=['section_id','beat'])
         
         # Assign global index
         valid_beats['global_beat_index'] = range(len(valid_beats))
         
         # Calculate group IDs based on group_size
-        valid_beats['group_id'] = valid_beats['global_index'] // self.group_size
+        valid_beats['group_id'] = valid_beats['global_beat_index'] // self.group_size
 
         # Check for groups spanning sections
         group_section_check = valid_beats.groupby('group_id')['section_id'].nunique()
