@@ -5,6 +5,7 @@ from src.preprocessors.ppg_preprocess import PPGPreProcessor
 
 from src.processors.beat_detectors.factory import BeatDetectorFactory
 from src.processors.sqi.beat_organiser import BeatOrganiser
+from src.processors.biomarkers.basic_biomarkers import BasicBiomarkers
 from src.processors.sqi.factory import SQIFactory
 
 from src.visuals.plots import (plot_ppg_sections_vs_time,
@@ -17,6 +18,10 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import os
 import pyarrow.feather as feather # Hopefully can remove in prod
+
+# General todos
+#TODO refactor methods to have a from_config() method to optionally take args from config directly
+#TODO add tests for all the extra classes fromt the past week! 12/12/2024
 
 def main():
     # Parse cmd line args and load config
@@ -177,16 +182,25 @@ def main():
     # Visualise example beat
     #plt.plot(all_beats[100])
     #plt.show()
+   
+
+    #TODO Main issue - Investigate this:
+    # len(combined_sections[combined_sections.is_beat_peak] == True) : 3645
+    # len(n_beat_segments[n_beat_segments.is_beat_peak] == True) : 453
     
     # Organise beats into n-beat segments
     organiser = BeatOrganiser(group_size=sqi_group_size)
     n_beat_segments = organiser.group_n_beats_inplace(combined_sections)
+    breakpoint() 
+    # Calc some biomarker
+    biomarkers = BasicBiomarkers(n_beat_segments)
+    n_beat_segments_biomarkers = biomarkers.compute_ibi()
    
     breakpoint()
  
     # Compute SQI   
     sqi = SQIFactory.create_sqi(sqi_type=sqi_type, sqi_composite_details=sqi_composite_details)
-    sqi_results = [sqi.compute(segment) for segment in n_beat_segments]
+    sqi_results = sqi.compute(n_beat_segments)
     
     breakpoint()
     #print(f"{len(sqi_results)} , {sqi_results[0]}") 
