@@ -78,9 +78,7 @@ def main():
 
         # Flag troughs inplace
         section['is_beat_trough'] = False
-        
         troughs_indices_realigned = section.iloc[troughs].index
-
         section.loc[troughs_indices_realigned, 'is_beat_trough'] = True
          
         # Plot detected peaks
@@ -102,12 +100,16 @@ def main():
             
             # Find peak
             beat_data = section.iloc[start:end]
-            peak_idx = beat_data['filtered_value'].idxmin()
+            peak_idx = beat_data['filtered_value'].idxmax()
             
             # Flag peak row for beat
             section.loc[peak_idx, 'is_beat_peak'] = True
             
-            print(f"{beat_id}") 
+            # Plot to check beat peaki
+            #plt.plot(beat_data['filtered_value'])
+            #plt.scatter(peak_idx, beat_data['filtered_value'][peak_idx], color='red')  
+            #plt.show()
+            #print(f"{beat_id}") 
         
         # Add annotated section to list
         annotated_sections.append(section)
@@ -134,19 +136,14 @@ def main():
     
     # Plot combined sections
     plt.figure(figsize=(12, 6))
-
-    # Plot the filtered signal
     plt.plot(combined_sections['filtered_value'], label='Filtered Signal', alpha=0.8)
-
-    # Mark the troughs (inverted peaks detected earlier)
+    
     troughs = combined_sections.loc[combined_sections['is_beat_trough'] == True]
     plt.scatter(troughs.index, troughs['filtered_value'], color='blue', label='Troughs', s=15)
 
-    # Mark the peaks
     peaks = combined_sections.loc[combined_sections['is_beat_peak'] == True]
     plt.scatter(peaks.index, peaks['filtered_value'], color='red', label='Peaks', s=15)
 
-    # Add labels and legend
     plt.title("Combined Sections with Detected Troughs and Peaks")
     plt.xlabel("Index")
     plt.ylabel("Filtered Value")
