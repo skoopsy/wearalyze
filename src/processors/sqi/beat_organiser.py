@@ -29,7 +29,7 @@ class BeatOrganiser:
         """
         
         # Filter rows with valid beats
-        valid_beats = beats_df[beats_df['beat'] != -1].copy()
+        valid_beats = beats_df.loc[beats_df['beat'] != -1].copy()
 
         # Sort items
         valid_beats.sort_values(by=['section_id','beat'])
