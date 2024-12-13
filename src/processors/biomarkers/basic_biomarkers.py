@@ -23,9 +23,10 @@ class BasicBiomarkers:
         
         return self.data
     
-    def compute_group_bpm_from_ibi(self):
+    def compute_bpm_from_ibi_group(self):
         """
-        Computes a mean Beats Per Minute (BPM) based on the IBI of number of beats fed in
+        Computes a mean Beats Per Minute (BPM) based on the IBI
+        of number of beats fed in
         """
         # Get slice of the data and organise it
         peaks = self.data[self.data['is_beat_peak'] == True].copy()
@@ -39,9 +40,21 @@ class BasicBiomarkers:
         
         return self.data
 
-    def compute_instant_bpm_from_ibi(self):
-        pass
-
+    def compute_bpm_from_ibi(self):
+        #NOT WORKING 
+        # Get slice of the data and organise it
+        peaks = self.data[self.data['is_beat_peak'] == True].copy()
+        peaks = peaks.sort_values(by=['group_id','global_beat_index'])
+        
+        # Calc bpm
+        peaks['instant_bpm'] = 60000 / peaks['ibi_ms'] 
+        bpm_mapping = peaks['instant_bpm'].to_dict()
+ 
+        # Add group bpm into input df via mapping the values
+        self.data['instant_bpm'] = self.data.index.map(bpm_mapping)
+        
+        return self.data
+ 
     def compute_bpm_from_total_time(self):
         """
         Compute a beats per minute (BPM) by taking the overall time, dividing it by the 

@@ -162,6 +162,7 @@ def main():
     
     #TODO Move this to visuals class as a plot method
     # Plot combined sections
+    """"
     plt.figure(figsize=(12, 6))
     plt.plot(combined_sections['filtered_value'], label='Filtered Signal', alpha=0.8)
     
@@ -177,7 +178,8 @@ def main():
     plt.legend()
     plt.grid(alpha=0.3)
     plt.show()
-    
+    """
+
     # Visualise example beat
     #plt.plot(all_beats[100])
     #plt.show()
@@ -189,17 +191,21 @@ def main():
     # Calc some biomarker
     biomarkers = BasicBiomarkers(data)
     data = biomarkers.compute_ibi()
-    data = biomarkers.compute_group_bpm_from_ibi()
+    data = biomarkers.compute_bpm_from_ibi_group()
+    data = biomarkers.compute_bpm_from_ibi()
+    
     breakpoint()
-
     # Visualise the HR ranges
-    #unique_group_bpm = df.drop_duplicates(subset=['group_id','group_bpm'])['group_bpm']
-    #plt.hist(unique_bpm, bins=50, edgecolor='black', alpha=0.7)
-    #plt.show()
+    group_bpms = data.drop_duplicates(subset=['group_id','group_bpm'])['group_bpm']
+    plt.hist(group_bpms, bins=50, edgecolor='black', alpha=0.7)
+    plt.xlabel('BPM')
+    plt.ylabel('frequency')
+    plt.title('Distribution of HRs')
+    plt.show()
  
     # Compute SQI   
     sqi = SQIFactory.create_sqi(sqi_type=sqi_type, sqi_composite_details=sqi_composite_details)
-    sqi_results = sqi.compute(n_beat_segments)
+    sqi_results = sqi.compute(data)
     
     breakpoint()
     #print(f"{len(sqi_results)} , {sqi_results[0]}") 
