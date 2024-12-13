@@ -192,9 +192,8 @@ def main():
     biomarkers = BasicBiomarkers(data)
     data = biomarkers.compute_ibi()
     data = biomarkers.compute_bpm_from_ibi_group()
-    data = biomarkers.compute_bpm_from_ibi()
     
-    breakpoint()
+    """ 
     # Visualise the HR ranges
     group_bpms = data.drop_duplicates(subset=['group_id','group_bpm'])['group_bpm']
     plt.hist(group_bpms, bins=50, edgecolor='black', alpha=0.7)
@@ -202,7 +201,8 @@ def main():
     plt.ylabel('frequency')
     plt.title('Distribution of HRs')
     plt.show()
- 
+    """
+
     # Compute SQI   
     sqi = SQIFactory.create_sqi(sqi_type=sqi_type, sqi_composite_details=sqi_composite_details)
     sqi_results = sqi.compute(data)

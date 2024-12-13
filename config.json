@@ -33,7 +33,12 @@
         "sqi_type": "composite",
         "sqi_composite_details":{
             "sqi_types": ["bpm_plausible"],
-            "combine_strategy": "sequential_validation"
+            "combine_strategy": "sequential_validation",
+            "type_details": {
+                "bpm_plausible": {
+                    "bpm_type": "group_bpm"
+                }
+            }
         }
     }
 }
