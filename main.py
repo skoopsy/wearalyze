@@ -84,11 +84,14 @@ def main():
         annotated_sections = [] # all sections stored
         
         for section_id, section in enumerate(sections):
-                   
+            
+            section = section.reset_index(drop=True).copy()
+       
             # Detect "troughs" - Detects peaks, so the signal is inverted.
             signal = section.filtered_value * -1 # Invert sig for troughs
             detector_results = beat_detector.detect(signal)
             troughs = detector_results["peaks"]
+            print(f"Troughs detected: {len(troughs)}")
             
             # Store trough indices independently
             trough_indices.extend(troughs) 
@@ -106,7 +109,7 @@ def main():
                 plt.show()
 
             # In-place modification initialisation
-            #section['section_id'] = section_id # logging of which section
+            section['section_id'] = section_id # logging of which section
             section['beat'] = -1 # Init at -1 incase row not allocated to beat
             section['is_beat_peak'] = False
          
@@ -128,16 +131,19 @@ def main():
                 #plt.show()
                 #print(f"{beat_id}") 
             
+            print(f"Unique beats found: {section.beat.nunique()}") 
+            #print(f"List of beat ids: {section.beat.unique()}")
+
             # Add annotated section to list
             annotated_sections.append(section)
-            
+             
             # Additonal storage of segmented beats incase needed
             segmented_beats = [
                 section[section['beat'] == beat_id].copy() 
                 for beat_id in section['beat'].unique() if beat_id != -1
             ]
             all_beats.extend(segmented_beats)
-           
+
             # Debugging prints
             if verbosity >= 1:
                 print(f"Section {section_id+1} / {len(sections)}")
@@ -147,7 +153,7 @@ def main():
             # The other sections will still be present, just not processed!!
             #if section_id == 1:
             #    break
-     
+
         # Combine anotated sections, may not need this atm 
         combined_sections = pd.concat(annotated_sections, ignore_index=True)
        
@@ -160,8 +166,8 @@ def main():
     if load_from_checkpoint and checkpoint_id == 1:
         combined_sections = pd.read_feather(checkpoint_file)
     
-    #TODO Move this to visuals class as a plot method
-    """
+    #TODO Mondeve this to visuals class as a plot method
+    
     # Plot combined sections
     plt.figure(figsize=(12, 6))
     plt.plot(combined_sections['filtered_value'], label='Filtered Signal', alpha=0.8)
@@ -178,7 +184,7 @@ def main():
     plt.legend()
     plt.grid(alpha=0.3)
     plt.show()
-    """
+    
     # Visualise example beat
     #plt.plot(all_beats[100])
     #plt.show()
