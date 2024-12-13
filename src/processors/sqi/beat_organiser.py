@@ -21,7 +21,7 @@ class BeatOrganiser:
 
         return n_beat_groups
     
-    def group_n_beats_inplace(self, beats_df: pd.DataFrame):
+    def group_n_beats_inplace(self, df: pd.DataFrame):
         """
         Group beats into n-sized segments from a DataFrame
         Each segment will contain beats across sections, preserving order
@@ -29,26 +29,33 @@ class BeatOrganiser:
         """
         
         # Filter rows with valid beats
-        #TODO I suspect this line to be the one reducing everything! so why are so mamny -1!
-        valid_beats = beats_df.loc[beats_df['beat'] != -1].copy()
+        valid_data = df.loc[df['beat'] != -1].copy()
         
         # Sort items
-        valid_beats.sort_values(by=['section_id','beat'])
+        valid_data = valid_data.sort_values(by=['section_id','beat']).reset_index(drop=True)
+
+        # Assign global index based on trough occurance
+        trough_mask = valid_data['is_beat_trough'] == True
+        trough_indices = valid_data.index[trough_mask]
         
-        # Assign global index
-        valid_beats['global_beat_index'] = range(len(valid_beats))
+        valid_data['global_beat_index'] = -1
+
+        for beat_num, (start_idx, end_idx) in enumerate(zip(trough_indices[:-1], trough_indices[1:])):
+            valid_data.loc[start_idx:end_idx, 'global_beat_index'] = beat_num
+            
+        # Check a single beat is being id correctly - beat# 100
+        #plt.plot(valid_data['filtered_value'][valid_data['global_beat_index'] == 100])
         
-        # Calculate group IDs based on group_size
-        valid_beats['group_id'] = valid_beats['global_beat_index'] // self.group_size
-        
+        # Calculate group IDs based on group_sie
+        valid_data['group_id'] = valid_data['global_beat_index'] // self.group_size
         #TODO: Might not be these lines! 
         # Check for groups spanning sections
-        group_section_check = valid_beats.groupby('group_id')['section_id'].nunique()
-
+        #group_section_check = valid_data.groupby('group_id')['section_id'].nunique()
         # Mark groups with beats from multiple sections as invalid
-        invalid_groups = group_section_check[group_section_check > 1].index
-        valid_beats.loc[valid_beats['group_id'].isin(invalid_groups), 'group_id'] = -1
+        #invalid_groups = group_section_check[group_section_check > 1].index
+        #valid_data.loc[valid_data['group_id'].isin(invalid_groups), 'group_id'] = -1
         
-        return valid_beats 
-        
+        return valid_data 
+       
+        # I think the issue is that vlid_beats is assigning a global beat index to each row, not each beat - each data point within each beat so that the grouping is grouping 10 data points not 10 beats. 
 

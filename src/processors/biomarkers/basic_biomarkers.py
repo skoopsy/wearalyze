@@ -12,7 +12,7 @@ class BasicBiomarkers:
         peaks = self.data.loc[self.data['is_beat_peak'] == True].copy()
         peaks = peaks.sort_values(by=['group_id','timestamp_ms'])
         peaks['diff_ms'] = peaks.groupby('group_id')['timestamp_ms'].diff()
-        
+        breakpoint() 
         # add an ibi column back into the input df
         self.data['ibi_ms'] = None
         self.data.loc[peaks.index, 'ibi_ms'] = peaks['diff_ms']
