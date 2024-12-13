@@ -8,20 +8,15 @@ class BasicBiomarkers:
         This mitigates calculating an IBI from beats that may be sequential via the 
         index but not temporally due to data filtering/segmentation/appending
         """
-        breakpoint()
         # Get the peak rows and calc ibis
-        peaks = self.data[self.data['is_beat_peak'] == True].copy()
-        breakpoint()
+        peaks = self.data.loc[self.data['is_beat_peak'] == True].copy()
         peaks = peaks.sort_values(by=['group_id','timestamp_ms'])
-        breakpoint()
         peaks['diff_ms'] = peaks.groupby('group_id')['timestamp_ms'].diff()
         
         # add an ibi column back into the input df
         self.data['ibi_ms'] = None
         self.data.loc[peaks.index, 'ibi_ms'] = peaks['diff_ms']
         
-        breakpoint()
-
         return self.data
     
     def compute_bpm_from_ibi(self):

@@ -31,7 +31,7 @@ class BeatOrganiser:
         # Filter rows with valid beats
         #TODO I suspect this line to be the one reducing everything! so why are so mamny -1!
         valid_beats = beats_df.loc[beats_df['beat'] != -1].copy()
-        breakpoint()
+        
         # Sort items
         valid_beats.sort_values(by=['section_id','beat'])
         
@@ -43,13 +43,12 @@ class BeatOrganiser:
         
         #TODO: Might not be these lines! 
         # Check for groups spanning sections
-        #group_section_check = valid_beats.groupby('group_id')['section_id'].nunique()
+        group_section_check = valid_beats.groupby('group_id')['section_id'].nunique()
 
         # Mark groups with beats from multiple sections as invalid
-        #invalid_groups = group_section_check[group_section_check > 1].index
-        #breakpoint()
-        #valid_beats.loc[valid_beats['group_id'].isin(invalid_groups), 'group_id'] = -1
-        #breakpoint()
+        invalid_groups = group_section_check[group_section_check > 1].index
+        valid_beats.loc[valid_beats['group_id'].isin(invalid_groups), 'group_id'] = -1
+        
         return valid_beats 
         
 

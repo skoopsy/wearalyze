@@ -148,12 +148,6 @@ def main():
             if verbosity >= 1:
                 print(f"Section {section_id+1} / {len(sections)}")
      
-            #TODO TO SPEED UP DEVELOPMENT, REMOVE IN PRO:
-            #REMEMBER: This is only processing the first 2 sections
-            # The other sections will still be present, just not processed!!
-            #if section_id == 1:
-            #    break
-
         # Combine anotated sections, may not need this atm 
         combined_sections = pd.concat(annotated_sections, ignore_index=True)
        
@@ -166,8 +160,7 @@ def main():
     if load_from_checkpoint and checkpoint_id == 1:
         combined_sections = pd.read_feather(checkpoint_file)
     
-    #TODO Mondeve this to visuals class as a plot method
-    
+    #TODO Move this to visuals class as a plot method
     # Plot combined sections
     plt.figure(figsize=(12, 6))
     plt.plot(combined_sections['filtered_value'], label='Filtered Signal', alpha=0.8)
@@ -180,7 +173,7 @@ def main():
 
     plt.title("Combined Sections with Detected Troughs and Peaks")
     plt.xlabel("Index")
-    plt.ylabel("Filtered Value")
+    plt.ylabel("Filtered PPG")
     plt.legend()
     plt.grid(alpha=0.3)
     plt.show()
@@ -189,14 +182,10 @@ def main():
     #plt.plot(all_beats[100])
     #plt.show()
 
-    #TODO Main issue - Investigate this:
-    # len(combined_sections[combined_sections.is_beat_peak] == True) : 3645
-    # len(n_beat_segments[n_beat_segments.is_beat_peak] == True) : 453
-    breakpoint()
     # Organise beats into n-beat segments
     organiser = BeatOrganiser(group_size=sqi_group_size)
     n_beat_segments = organiser.group_n_beats_inplace(combined_sections)
-    breakpoint() 
+    
     # Calc some biomarker
     biomarkers = BasicBiomarkers(n_beat_segments)
     n_beat_segments_biomarkers = biomarkers.compute_ibi()
