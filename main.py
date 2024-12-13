@@ -184,13 +184,18 @@ def main():
 
     # Organise beats into n-beat segments
     organiser = BeatOrganiser(group_size=sqi_group_size)
-    n_beat_segments = organiser.group_n_beats_inplace(combined_sections)
+    data = organiser.group_n_beats_inplace(combined_sections)
     
     # Calc some biomarker
-    biomarkers = BasicBiomarkers(n_beat_segments)
-    n_beat_segments_biomarkers = biomarkers.compute_ibi()
-   
+    biomarkers = BasicBiomarkers(data)
+    data = biomarkers.compute_ibi()
+    data = biomarkers.compute_group_bpm_from_ibi()
     breakpoint()
+
+    # Visualise the HR ranges
+    #unique_group_bpm = df.drop_duplicates(subset=['group_id','group_bpm'])['group_bpm']
+    #plt.hist(unique_bpm, bins=50, edgecolor='black', alpha=0.7)
+    #plt.show()
  
     # Compute SQI   
     sqi = SQIFactory.create_sqi(sqi_type=sqi_type, sqi_composite_details=sqi_composite_details)
