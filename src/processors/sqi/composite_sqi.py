@@ -30,9 +30,6 @@ class CompositeSQI(SQIBase):
             return sum(sqi_results) / len(sqi_results)
         #TODO Revisit the output of this when api better understood
         elif self.combine_strategy == "sequential_validation":
-            if all(sqi_results) == True:
-                return 1.0 # Think about how to handle bool instead
-            else:
-                return 0.0 # Think about how to handle bool instead
+            pass
         else:
             raise ValueError(f"Unknown combination strategy: {self.combine_strategy}")

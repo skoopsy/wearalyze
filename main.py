@@ -205,8 +205,17 @@ def main():
 
     # Compute SQI   
     sqi = SQIFactory.create_sqi(sqi_type=sqi_type, sqi_composite_details=sqi_composite_details)
+    # May not need to set as new
     sqi_results = sqi.compute(data)
     
+    """
+    sqi_bpms = data[data.sqi_bpm_plausible == True]
+    plt.hist(group_bpms, bins=50, edgecolor='black', alpha=0.7)
+    plt.xlabel('BPM')
+    plt.ylabel('Frequency')
+    plt.title('Distribution of HRs after SQI Filtering')
+    plt.show()
+    """
     breakpoint()
     #print(f"{len(sqi_results)} , {sqi_results[0]}") 
 

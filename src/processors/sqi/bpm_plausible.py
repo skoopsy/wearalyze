@@ -9,14 +9,16 @@ class SQIBpmPlausible(SQIBase):
         min_bpm = 30
         bpm_type = 'group_bpm'
         bpm = data.drop_duplicates(subset=['group_id','group_bpm'])['group_bpm']
-        breakpoint()
-        #data['sqi_bpm_plausible'] = bpm.apply(self.bpm_check)
+        
+        # BPM Check
         data['sqi_bpm_plausible'] = data.apply(
-            lambda row: self.bpm_check(row, max_bpm, min_bpm), axis=1
+            lambda row: self.bpm_check(row, 'group_bpm',  max_bpm, min_bpm), axis=1
         )
 
-        breakpoint()
-        return result
+        return data
 
-    def bpm_check(self, row, max_bpm, min_bpm):
-        return row['group_bpm'] < max_bpm and row['group_bpm']>min_bpm
+    def bpm_check(self, row, col, max_bpm, min_bpm):
+        """
+        Check that the column value for input row is within the min and max limits
+        """
+        return row[col] < max_bpm and row[col]>min_bpm
