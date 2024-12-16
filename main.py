@@ -2,75 +2,188 @@ from src.loaders.config_loader import get_config
 from src.loaders.loader_factory import DataLoaderFactory
 
 from src.preprocessors.ppg_preprocess import PPGPreProcessor
-from src.processors.beat_detectors.factory import BeatDetectorFactory
 
-from src.visuals.plots import plot_ppg_sections_vs_time, plot_detected_inflections, plot_scaleogram, plot_signal_detected_peaks
+from src.processors.beat_detectors.factory import BeatDetectorFactory
+from src.processors.sqi.beat_organiser import BeatOrganiser
+from src.processors.biomarkers.basic_biomarkers import BasicBiomarkers
+from src.processors.sqi.factory import SQIFactory
+
+from src.visuals.plots import Plots
 
 import matplotlib.pyplot as plt
 import pandas as pd
+import os
+import pyarrow.feather as feather # Hopefully can remove in prod
+
+# General todos
+#TODO refactor methods to have a from_config() method to optionally take args from config directly
+#TODO add tests for all the extra classes fromt the past week! 12/12/2024
 
 def main():
     # Parse cmd line args and load config
     config = get_config()
 
-    # Extract config params - should make config a struct/obj
+    # Extract config params
+    #TODO Make this a struct and abstact unloading away
+    #TODO Create from_config() functions in each class to feed config in optionally
+    verbosity = config['outputs']['print_verbosity']
     file_paths = config['data_source']['file_paths']
     device = config['data_source']['device']
     sensor_type = config['data_source']['sensor_type']
     threshold = config['ppg_preprocessing']['threshold']
     beat_detector_name = config["ppg_processing"]["beat_detector"]
+    sqi_group_size = config["ppg_processing"]["sqi_group_size"]
+    sqi_type = config["ppg_processing"]["sqi_type"]
+    sqi_composite_details = config["ppg_processing"]["sqi_composite_details"]
+    load_from_checkpoint = config["checkpoints"]["load_from_checkpoint"]
+    checkpoint_save = config["checkpoints"]["checkpoint_save"]
+    checkpoint_dir = config["checkpoints"]["directory"]
+    checkpoint_id = config["checkpoints"]["checkpoint_id"]
+    checkpoint_data_id = config["checkpoints"]["data_id"]
 
-    # Load data
-    loader = DataLoaderFactory.get_loader(device, sensor_type)
-    data = loader.load_data(file_paths)
-    data = loader.standardise(data) 
-    print("Finished loading data")
-
-    # Preprocess PPG data
-    preprocessor = PPGPreProcessor(data, config)
-    #TODO thresholding might not work for polar, only corsano:
-    sections = preprocessor.create_thresholded_sections() # Get sections where device was worn
-    for section in sections:
-        print(f"{len(section)}")
-     
-    filtered_sections = preprocessor.filter_cheby2(sections)
-    print("Finished bandpass filtering  sections")
+    checkpoint_file = f"{checkpoint_dir}/{checkpoint_id}_{checkpoint_data_id}.feather"
     
-    # Plot entire compliance sections
-    #plot_ppg_sections_vs_time(filtered_sections)
+    if not load_from_checkpoint:
 
-    # Instantiate beat detector
-    beat_detector = BeatDetectorFactory.create(beat_detector_name)
-    
-    all_beats = []
-    # Process each section
-    for i, section in enumerate(filtered_sections):
-        signal = section.filtered_value * -1 # Invert sig for trough detection 
+        # Load data
+        loader = DataLoaderFactory.get_loader(device, sensor_type)
+        data = loader.load_data(file_paths)
+        data = loader.standardise(data)
+        if verbosity >= 1: 
+            print("Finished loading data")
+
+        # Preprocess PPG data
+        preprocessor = PPGPreProcessor(data, config)
+        #TODO thresholding might not work for polar, only corsano:
+        sections = preprocessor.create_thresholded_sections() # Get sections where device was worn
         
-        # Detect "troughs"
-        detector_results = beat_detector.detect(signal)
-        print(f"{len(detector_results)}")
-        peaks = detector_results["peaks"]
-        # Segment into individual beat (trough to trough is 1 beat)
-        beats = [
-            signal.iloc[peaks[i] : peaks[i+1]].copy() * -1
-            for i in range(len(peaks) -1)
-        ]
-        all_beats.extend(beats)
-        print(f"Finished beat detection for section {i+1} / {len(filtered_sections)}")    
-    # Visualise example beat
-    plt.plot(all_beats[100])
-    plt.show()
+        # Degbugging prints
+        if verbosity > 1:
+            for i, section in enumerate(sections):
+                print(f"Section {i+1} data points: {len(section)}") 
+        
+        # Apply bandpass filter - Creates new column 'filtered_value' in df
+        preprocessor.filter_cheby2(sections)
+        
+        # Debugging prints
+        if verbosity >= 1:
+            print("Finished bandpass filtering  sections")
+        
+        # Plot entire compliance sections
+        #plot_ppg_sections_vs_time(filtered_sections)
 
-    # Group beats into n-sized segments
-    n = 10
-    n_beat_segments = [
-        pd.concat(all_beats[i : i + n ])
-        for i in range(0, len(all_beats), n)
-    ]
-    # Run Signal quality indicies
-    for i, segment in enumerate(n_beat_segments):
-        print(f'Segment {i}, start:{segment['timestamp'].iloc[0]}')
+        # Detect heart beats
+        beat_detector = BeatDetectorFactory.create(beat_detector_name)
+        all_beats = []
+        peak_indices = []
+        trough_indices = []
+        annotated_sections = [] # all sections stored
+        
+        for section_id, section in enumerate(sections):
+            
+            section = section.reset_index(drop=True).copy()
+       
+            # Detect "troughs" - Detects peaks, so the signal is inverted.
+            signal = section.filtered_value * -1 # Invert sig for troughs
+            detector_results = beat_detector.detect(signal)
+            troughs = detector_results["peaks"]
+            print(f"Troughs detected: {len(troughs)}")
+            
+            # Store trough indices independently
+            trough_indices.extend(troughs) 
+
+            # Flag troughs inplace
+            section['is_beat_trough'] = False
+            troughs_indices_realigned = section.iloc[troughs].index
+            section.loc[troughs_indices_realigned, 'is_beat_trough'] = True
+             
+            # Plot detected peaks
+            plot = False
+            if plot:
+                plt.plot(-1*signal.reset_index().filtered_value)
+                plt.scatter(troughs, -1*signal.reset_index().filtered_value[troughs], color='red')
+                plt.show()
+
+            # In-place modification initialisation
+            section['section_id'] = section_id # logging of which section
+            section['beat'] = -1 # Init at -1 incase row not allocated to beat
+            section['is_beat_peak'] = False
+         
+            # Annotate beats and peaks
+            for beat_id, (start, end) in enumerate(zip(troughs[:-1], troughs[1:])):
+                # Assign beat number to rows
+                section.loc[start:end, 'beat'] = beat_id
+                
+                # Find peak
+                beat_data = section.iloc[start:end]
+                peak_idx = beat_data['filtered_value'].idxmax()
+                
+                # Flag peak row for beat
+                section.loc[peak_idx, 'is_beat_peak'] = True
+                
+                # Plot to check beat peaki
+                #plt.plot(beat_data['filtered_value'])
+                #plt.scatter(peak_idx, beat_data['filtered_value'][peak_idx], color='red')  
+                #plt.show()
+                #print(f"{beat_id}") 
+            
+            print(f"Unique beats found: {section.beat.nunique()}") 
+            #print(f"List of beat ids: {section.beat.unique()}")
+
+            # Add annotated section to list
+            annotated_sections.append(section)
+             
+            # Additonal storage of segmented beats incase needed
+            segmented_beats = [
+                section[section['beat'] == beat_id].copy() 
+                for beat_id in section['beat'].unique() if beat_id != -1
+            ]
+            all_beats.extend(segmented_beats)
+
+            # Debugging prints
+            if verbosity >= 1:
+                print(f"Section {section_id+1} / {len(sections)}")
+     
+        # Combine anotated sections, may not need this atm 
+        combined_sections = pd.concat(annotated_sections, ignore_index=True)
+       
+        # Create checkpoint - mostly for development
+        # Save df as arrow fil
+        if checkpoint_save:
+            combined_sections.reset_index(drop=True).to_feather(checkpoint_file)
+            print(f"Checkpoint created: combined_sections saved to {checkpoint_file}")
+         
+    if load_from_checkpoint and checkpoint_id == 1:
+        combined_sections = pd.read_feather(checkpoint_file)
+    
+    #TODO Move this to visuals class as a plot method
+    # Plot combined sections
+    
+    Plots.all_detected_troughs_and_peaks(combined_sections, 'filtered_value')
+    #Plots.single_beat(all_beats, 100)
+
+    # Organise beats into n-beat segments
+    organiser = BeatOrganiser(group_size=sqi_group_size)
+    data = organiser.group_n_beats_inplace(combined_sections)
+    
+    # Calc some biomarker
+    biomarkers = BasicBiomarkers(data)
+    data = biomarkers.compute_ibi()
+    data = biomarkers.compute_bpm_from_ibi_group()
+
+    Plots.group_hr_distribution(data, bins=50)    
+
+    # Compute SQI   
+    sqi = SQIFactory.create_sqi(sqi_type=sqi_type, sqi_composite_details=sqi_composite_details)
+    # May not need to set as new
+    sqi_results = sqi.compute(data)
+    
+    
+    sqi_bpms = data[data.sqi_bpm_plausible == True]
+    
+    Plots.group_hr_distribution(sqi_bpms, bins=50)
+    
+    breakpoint()
 
 if __name__ == "__main__":
     main()

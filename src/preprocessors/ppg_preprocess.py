@@ -17,9 +17,11 @@ class PPGPreProcessor:
 
         # Mark sections above threshold
         self.data['above_threshold'] = self.data['ppg'] > threshold
+        
         self.data['section_id'] = (self.data['above_threshold'] != self.data['above_threshold'].shift()).cumsum()
+         
         sections = [section_df for _, section_df in self.data[self.data['above_threshold']].groupby('section_id')]
-
+        
         # Filter sections by duration
         valid_sections = []
         for section in sections:
@@ -38,11 +40,22 @@ class PPGPreProcessor:
                         print(f"Created subsection with {len(subsection)} data points")
                 else:
                     valid_sections.append(section)
+        
+        # Re-assign a new section_id after filtering out other sections
+        for i, section_df in enumerate(valid_sections, start=1):
+            section_df['section_id'] = i
 
         return valid_sections
 
     def filter_cheby2(self, sections):
-        """Apply Chebyshev Type II filter to each section."""
+        """
+        Apply Chebyshev Type II filter to each section of input data
+        
+        This outputs the result in two ways:
+         1. appendeds a new column to the input dataframe inplace called filtered_value
+         2. Returns a new dataframe with the filtered_values and timestamp on their own.
+        """
+
         sample_rate = self.config['filter']['sample_rate']
         lowcut = self.config['filter']['lowcut']
         highcut = self.config['filter']['highcut']
