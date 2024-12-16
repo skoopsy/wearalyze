@@ -148,7 +148,7 @@ def main():
         combined_sections = pd.concat(annotated_sections, ignore_index=True)
        
         # Create checkpoint - mostly for development
-        # Save df as arrow fil
+        # Save df as arrow file
         if checkpoint_save:
             combined_sections.reset_index(drop=True).to_feather(checkpoint_file)
             print(f"Checkpoint created: combined_sections saved to {checkpoint_file}")
@@ -156,11 +156,7 @@ def main():
     if load_from_checkpoint and checkpoint_id == 1:
         combined_sections = pd.read_feather(checkpoint_file)
     
-    #TODO Move this to visuals class as a plot method
-    # Plot combined sections
-    
     Plots.all_detected_troughs_and_peaks(combined_sections, 'filtered_value')
-    #Plots.single_beat(all_beats, 100)
 
     # Organise beats into n-beat segments
     organiser = BeatOrganiser(group_size=sqi_group_size)
@@ -175,10 +171,7 @@ def main():
 
     # Compute SQI   
     sqi = SQIFactory.create_sqi(sqi_type=sqi_type, sqi_composite_details=sqi_composite_details)
-    # May not need to set as new
-    sqi_results = sqi.compute(data)
-    
-    
+    sqi_results = sqi.compute(data) # Setting for clarity, be careful data is from sqi too now as inplace
     sqi_bpms = data[data.sqi_bpm_plausible == True]
     
     Plots.group_hr_distribution(sqi_bpms, bins=50)
