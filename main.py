@@ -8,11 +8,7 @@ from src.processors.sqi.beat_organiser import BeatOrganiser
 from src.processors.biomarkers.basic_biomarkers import BasicBiomarkers
 from src.processors.sqi.factory import SQIFactory
 
-from src.visuals.plots import (plot_ppg_sections_vs_time,
-                               plot_detected_inflections,
-                               plot_scaleogram,
-                               plot_signal_detected_peaks
-                              )
+from src.visuals.plots import Plots
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -162,27 +158,9 @@ def main():
     
     #TODO Move this to visuals class as a plot method
     # Plot combined sections
-    """"
-    plt.figure(figsize=(12, 6))
-    plt.plot(combined_sections['filtered_value'], label='Filtered Signal', alpha=0.8)
     
-    troughs = combined_sections.loc[combined_sections['is_beat_trough'] == True]
-    plt.scatter(troughs.index, troughs['filtered_value'], color='blue', label='Troughs', s=15)
-
-    peaks = combined_sections.loc[combined_sections['is_beat_peak'] == True]
-    plt.scatter(peaks.index, peaks['filtered_value'], color='red', label='Peaks', s=15)
-
-    plt.title("Combined Sections with Detected Troughs and Peaks")
-    plt.xlabel("Index")
-    plt.ylabel("Filtered PPG")
-    plt.legend()
-    plt.grid(alpha=0.3)
-    plt.show()
-    """
-
-    # Visualise example beat
-    #plt.plot(all_beats[100])
-    #plt.show()
+    Plots.all_detected_troughs_and_peaks(combined_sections, 'filtered_value')
+    #Plots.single_beat(all_beats, 100)
 
     # Organise beats into n-beat segments
     organiser = BeatOrganiser(group_size=sqi_group_size)
@@ -192,16 +170,8 @@ def main():
     biomarkers = BasicBiomarkers(data)
     data = biomarkers.compute_ibi()
     data = biomarkers.compute_bpm_from_ibi_group()
-    
-    """ 
-    # Visualise the HR ranges
-    group_bpms = data.drop_duplicates(subset=['group_id','group_bpm'])['group_bpm']
-    plt.hist(group_bpms, bins=50, edgecolor='black', alpha=0.7)
-    plt.xlabel('BPM')
-    plt.ylabel('frequency')
-    plt.title('Distribution of HRs')
-    plt.show()
-    """
+
+    Plots.group_hr_distribution(data, bins=50)    
 
     # Compute SQI   
     sqi = SQIFactory.create_sqi(sqi_type=sqi_type, sqi_composite_details=sqi_composite_details)
@@ -210,15 +180,10 @@ def main():
     
     
     sqi_bpms = data[data.sqi_bpm_plausible == True]
-    """
-    plt.hist(group_bpms, bins=50, edgecolor='black', alpha=0.7)
-    plt.xlabel('BPM')
-    plt.ylabel('Frequency')
-    plt.title('Distribution of HRs after SQI Filtering')
-    plt.show()
-    """
+    
+    Plots.group_hr_distribution(sqi_bpms, bins=50)
+    
     breakpoint()
-    #print(f"{len(sqi_results)} , {sqi_results[0]}") 
 
 if __name__ == "__main__":
     main()
