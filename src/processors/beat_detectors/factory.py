@@ -1,7 +1,7 @@
 from src.processors.beat_detectors.ampd import AMPDDetector
 from src.processors.beat_detectors.msptd import MSPTDDetector
 
-class BeatDetectorFactory:
+class PeakDetectorFactory:
     @staticmethod
     def create(detector_name: str):
         detectors = {

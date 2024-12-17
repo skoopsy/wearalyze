@@ -3,7 +3,7 @@ from src.loaders.loader_factory import DataLoaderFactory
 
 from src.preprocessors.ppg_preprocess import PPGPreProcessor
 
-from src.processors.beat_detectors.factory import BeatDetectorFactory
+from src.processors.beat_detectors.factory import PeakDetectorFactory
 from src.processors.sqi.beat_organiser import BeatOrganiser
 from src.processors.biomarkers.basic_biomarkers import BasicBiomarkers
 from src.processors.sqi.factory import SQIFactory
@@ -70,10 +70,10 @@ def main():
             print("Finished bandpass filtering  sections")
         
         # Plot entire compliance sections
-        #plot_ppg_sections_vs_time(filtered_sections)
+        #Plots.plot_ppg_sections_vs_time(filtered_sections)
 
         # Detect heart beats
-        beat_detector = BeatDetectorFactory.create(beat_detector_name)
+        beat_detector = PeakDetectorFactory.create(beat_detector_name)
         all_beats = []
         peak_indices = []
         trough_indices = []
