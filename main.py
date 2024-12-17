@@ -3,7 +3,7 @@ from src.loaders.loader_factory import DataLoaderFactory
 
 from src.preprocessors.ppg_preprocess import PPGPreProcessor
 
-from src.processors.beat_detectors.factory import PeakDetectorFactory
+from src.processors.periodic_peak_detectors.factory import PeakDetectorFactory
 from src.processors.sqi.beat_organiser import BeatOrganiser
 from src.processors.biomarkers.basic_biomarkers import BasicBiomarkers
 from src.processors.sqi.factory import SQIFactory

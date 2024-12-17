@@ -1,4 +1,4 @@
-from src.processors.beat_detectors.base import BaseDetector
+from src.processors.periodic_peak_detectors.base import BaseDetector
 
 import numpy as np
 from scipy.signal import detrend
