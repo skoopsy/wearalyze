@@ -8,7 +8,7 @@
 		"file_paths": ["data/corsano2872b_ppg_green.csv"]
 	},
     "checkpoints":{
-        "load_from_checkpoint": true,
+        "load_from_checkpoint": false,
         "directory": "data/checkpoints",
         "checkpoint_id": 1,
         "data_id": "corsano_ppg_g",

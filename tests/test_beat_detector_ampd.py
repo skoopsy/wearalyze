@@ -1,5 +1,5 @@
 import numpy as np
-from src.processors.beat_detectors.ampd import AMPDDetector
+from src.processors.periodic_peak_detectors.ampd import AMPDDetector
 
 """
 def test_peak_detect_ampd():
