@@ -12,7 +12,7 @@ class HeartBeatDetector:
         self.beat_detector_name = config["ppg_processing"]["beat_detector"]
         self.verbosity = config['outputs']['print_verbosity']
     
-    def process_sections(self, sections: list(pd.DataFrame):
+    def process_sections(self, sections: list()):
         """
         Main processing methods to detect and and mark heart (quasi-periodic) beats
         Args:
@@ -22,15 +22,15 @@ class HeartBeatDetector:
             list of pd.DataFrame: List of individual heart beats based on trough segmentation.
         """
         # Instantiate beat detector method from config
-        beat_detector = PeakDetectorFactory.create(beat_detector_name)
+        beat_detector = PeakDetectorFactory.create(self.beat_detector_name)
         annotated_sections = []
         all_beats = [] 
         
-        for section_id, section in emumerate(sections):
+        for section_id, section in enumerate(sections):
             section = section.reset_index(drop=True).copy()
             
             # Detect troughs (inverted signal as it will detect "peaks"    
-            signal = signal.filtered_value * -1
+            signal = section.filtered_value * -1
             detector_results = beat_detector.detect(signal)
             troughs = detector_results["peaks"]
 
@@ -38,7 +38,7 @@ class HeartBeatDetector:
                 print(f"Troughtd detected: {len(troughs)}")
             
             # Annotate the sections with info
-            section = self._annotate_section(section, troughs, section_id)
+            section = self._annotate_heart_beats(section, troughs, section_id)
             
             # Combine sections
             annotated_sections.append(section)
@@ -53,9 +53,11 @@ class HeartBeatDetector:
             if self.verbosity >= 1:
                 print(f"Processed section {section_id+1} / {len(sections)}")
         
-        Combined_sections = pd.concat(annotated_sections, ignore_index=True)
+        combined_sections = pd.concat(annotated_sections, ignore_index=True)
+    
+        return combined_sections, all_beats
 
-    def _annotate_heart_beats(self, section: pd.DataFrame, troughs: list(int), section_id: int):
+    def _annotate_heart_beats(self, section: pd.DataFrame, troughs: list(), section_id: int):
         """
         Annotates a section with detected heart beats, troughs, peaks, and section id
         Args:
@@ -84,7 +86,7 @@ class HeartBeatDetector:
 
             # Detect peak within beat
             beat_data = section.iloc[start:end]
-            peak_idx = beat_data['filtered_value']idxmax()
+            peak_idx = beat_data['filtered_value'].idxmax()
             section.loc[peak_idx, 'is_beat_peak'] = True
 
         if self.verbosity > 1:
