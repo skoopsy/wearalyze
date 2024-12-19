@@ -97,6 +97,7 @@ def main():
     biomarkers = BasicBiomarkers(data)
     data = biomarkers.compute_ibi()
     data = biomarkers.compute_bpm_from_ibi_group()
+    biomarkers.compute_group_ibi_stats()
 
     Plots.group_hr_distribution(data, bins=50)    
 
@@ -104,9 +105,18 @@ def main():
     sqi = SQIFactory.create_sqi(sqi_type=sqi_type, sqi_composite_details=sqi_composite_details)
     sqi_results = sqi.compute(data) # Setting for clarity, be careful data is from sqi too now as inplace
     sqi_bpms = data[data.sqi_bpm_plausible == True]
-    
+       
     Plots.group_hr_distribution(sqi_bpms, bins=50)
     
+    sqi_ibis = sqi_bpms[sqi_bpms.sqi_ibi_max == True]
+
+    Plots.group_hr_distribution(sqi_ibis, bins=50)
+
+    breakpoint()
+
+    sqi_ibi_ratio = sqi_ibis[sqi_ibis.sqi_ibi_ratio_group == True]
+
+    Plots.group_hr_distribution(sqi_ibi_ratio, bins = 50)
     breakpoint()
 
 if __name__ == "__main__":

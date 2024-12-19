@@ -32,7 +32,7 @@
         "sqi_group_size": 10,
         "sqi_type": "composite",
         "sqi_composite_details":{
-            "sqi_types": ["bpm_plausible","ibi_max"],
+            "sqi_types": ["bpm_plausible","ibi_max", "ibi_ratio_group"],
             "combine_strategy": "sequential_validation",
             "type_details": {
                 "bpm_plausible": {

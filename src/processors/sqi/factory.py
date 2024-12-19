@@ -1,6 +1,7 @@
 from src.processors.sqi.composite_sqi import CompositeSQI
 from src.processors.sqi.bpm_plausible import SQIBpmPlausible
 from src.processors.sqi.ibi_max import SQIIBIMax
+from src.processors.sqi.ibi_ratio_group import SQIIBIRatioGroup
 
 class SQIFactory:
     @staticmethod
@@ -20,6 +21,9 @@ class SQIFactory:
 
         if sqi_type == "ibi_max":
             return SQIIBIMax()
+
+        if sqi_type == "ibi_ratio_group":
+            return SQIIBIRatioGroup()
 
         elif sqi_type == "composite":
             if not sqi_composite_details or "sqi_types" not in sqi_composite_details:

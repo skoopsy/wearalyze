@@ -23,6 +23,19 @@ class BasicBiomarkers:
         
         return self.data
     
+    def compute_group_ibi_stats(self):
+        # Filter to get just the peaks
+        peaks = self.data.loc[self.data['is_beat_peak'], ['group_id','ibi_ms']]
+
+        # Compute max and min per group
+        group_stats = peaks.groupby('group_id')['ibi_ms'].agg(['min','max'])
+
+        # Map results back to df
+        self.data['ibi_min_group'] = self.data['group_id'].map(group_stats['min'])
+        self.data['ibi_max_group'] = self.data['group_id'].map(group_stats['max'])
+  
+        return self.data
+
     def compute_bpm_from_ibi_group(self):
         """
         Computes a mean Beats Per Minute (BPM) based on the IBI
