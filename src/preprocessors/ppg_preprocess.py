@@ -10,7 +10,6 @@ class PPGPreProcessor:
 
     def create_thresholded_sections(self):
         """Identify valid sections of data based on threshold."""
-        self.data['timestamp'] = pd.to_datetime(self.data['timestamp'], unit='ms')
         threshold = self.config['ppg_preprocessing']['threshold']
         min_duration = self.config['ppg_preprocessing']['min_duration']
         max_length = 60000
@@ -25,6 +24,7 @@ class PPGPreProcessor:
         # Filter sections by duration
         valid_sections = []
         for section in sections:
+            
             start_time = section['timestamp_ms'].iloc[0]
             end_time = section['timestamp_ms'].iloc[-1]
             duration = end_time - start_time
@@ -44,6 +44,13 @@ class PPGPreProcessor:
         # Re-assign a new section_id after filtering out other sections
         for i, section_df in enumerate(valid_sections, start=1):
             section_df['section_id'] = i
+
+            # Drop the above thrshold column as its not needed
+            if 'above_threshold' in section_df.columns:
+                section_df = section_df.drop(columns=['above_threshold'], errors='ignore')
+            if 'data_points' in section_df.columns:
+                section_df = section_df.drop(columns=['data_points'], errors='ignore')
+            valid_sections[i - 1] = section_df 
 
         return valid_sections
     

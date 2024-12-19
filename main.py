@@ -57,8 +57,6 @@ def main():
         #TODO thresholding might not work for polar, only corsano:
         sections = preprocessor.create_thresholded_sections() # Get sections where device was worn
        
-        breakpoint()
- 
         if verbosity > 1:
             for i, section in enumerate(sections):
                 print(f"Section {i+1} data points: {len(section)}") 
@@ -66,7 +64,9 @@ def main():
 
         # Apply resmapling to regularise intervals of measured data
         resampled_sections = preprocessor.interpolate_to_regular_intervals(sections)
-        
+       
+        breakpoint()
+ 
         # Apply bandpass filter - Creates new column 'filtered_value' in df
         preprocessor.filter_cheby2(resampled_sections)
         
