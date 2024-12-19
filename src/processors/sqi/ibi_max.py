@@ -1,6 +1,6 @@
 from src.processors.sqi.base import SQIBase
 
-class SQIMaxIBI(SQIBase):
+class SQIIBIMax(SQIBase):
     def compute(self, data):
         """
         Check every IBI and filter out IBIs greater than threshold
@@ -9,11 +9,14 @@ class SQIMaxIBI(SQIBase):
         max_ibi = 60000 / min_bpm # in miliseconds
         
         # Check
-        data['sqi_max_ibi'] = data.apply(
-            lambda row: self.max_ibi_check(row, ibi_ms, max_ibi), axis=1
+        data['sqi_ibi_max'] = data.apply(
+            lambda row: self.max_threshold_check(row, 'ibi_ms', max_ibi), axis=1
         )
         
         return data
 
-    def max_ibi_check(self, row, col, max_ibi):
-        return row[col] < max_ibi
+    def max_threshold_check(self, row, col, threshold):
+        if row[col] == None:
+            return False
+        else:
+            return row[col] < threshold

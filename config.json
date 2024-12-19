@@ -8,7 +8,7 @@
 		"file_paths": ["data/corsano2872b_ppg_green.csv"]
 	},
     "checkpoints":{
-        "load_from_checkpoint": True,
+        "load_from_checkpoint": true,
         "directory": "data/checkpoints",
         "checkpoint_id": 1,
         "data_id": "corsano_ppg_g",
@@ -32,7 +32,7 @@
         "sqi_group_size": 10,
         "sqi_type": "composite",
         "sqi_composite_details":{
-            "sqi_types": ["bpm_plausible"],
+            "sqi_types": ["bpm_plausible","ibi_max"],
             "combine_strategy": "sequential_validation",
             "type_details": {
                 "bpm_plausible": {
