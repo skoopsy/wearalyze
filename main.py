@@ -60,9 +60,13 @@ def main():
         if verbosity > 1:
             for i, section in enumerate(sections):
                 print(f"Section {i+1} data points: {len(section)}") 
+
+
+        # Apply resmapling to regularise intervals of measured data
+        resampled_sections = preprocessor.interpolate_to_regular_intervals(sections)
         
         # Apply bandpass filter - Creates new column 'filtered_value' in df
-        preprocessor.filter_cheby2(sections)
+        preprocessor.filter_cheby2(resampled_sections)
         
         # Debugging prints
         if verbosity >= 1:
@@ -73,7 +77,7 @@ def main():
     
         # Detect and annotate heart beats
         heartbeat_detector = HeartBeatDetector(config)
-        combined_sections, all_beats = heartbeat_detector.process_sections(sections)
+        combined_sections, all_beats = heartbeat_detector.process_sections(resampled_sections)
        
         if verbosity >= 1:
             print("Heart Beat Detection Complete")

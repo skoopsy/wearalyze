@@ -62,7 +62,7 @@ class PPGPreProcessor:
         """
 
         # Combine all sections into one for frequency calculation
-        combined = pd.concat(sections, ignore_index = true)
+        combined = pd.concat(sections, ignore_index = True)
         combined = combined.sort_values('timestamp_ms')
 
         # Calc intervals
@@ -76,10 +76,10 @@ class PPGPreProcessor:
 
         final_freq = rounded_freq / downsampling_factor
 
-        interval_ms = 1000.0 / final_freq\
+        interval_ms = 1000.0 / final_freq
         interval_ms = round(interval_ms, 3)
             
-        interval_str = f'{int(interval_ms)}L'
+        interval_str = f'{int(interval_ms)}ms'
 
         return interval_str
 
