@@ -99,24 +99,29 @@ def main():
     data = biomarkers.compute_bpm_from_ibi_group()
     biomarkers.compute_group_ibi_stats()
 
-    Plots.group_hr_distribution(data, bins=50)    
+    beats = len(data[data.is_beat_peak == True])
+    plot_txt = f"Beats = {str(beats)}"
+    Plots.group_hr_distribution(data, bins=50, title_append = plot_txt)    
 
     # Compute SQI   
     sqi = SQIFactory.create_sqi(sqi_type=sqi_type, sqi_composite_details=sqi_composite_details)
     sqi_results = sqi.compute(data) # Setting for clarity, be careful data is from sqi too now as inplace
-    sqi_bpms = data[data.sqi_bpm_plausible == True]
-       
-    Plots.group_hr_distribution(sqi_bpms, bins=50)
+    sqi_bpms = data[data.sqi_bpm_plausible == True] 
+    sqi_bpms_peaks = sqi_bpms[sqi_bpms.is_beat_peak == True]
+
+    rows = len(sqi_bpms_peaks)
+    plot_txt = f"SQI: Avg BPM, Totals Heart Beats: str({rows})"
+    Plots.group_hr_distribution(sqi_bpms_peaks, bins=50, title_append=plot_txt)
     
     sqi_ibis = sqi_bpms[sqi_bpms.sqi_ibi_max == True]
-
-    Plots.group_hr_distribution(sqi_ibis, bins=50)
-
-    breakpoint()
+    rows = len(sqi_ibis)
+    plot_txt = f"SQI: IBI Max, Totals Heart Beats: str({rows})"
+    Plots.group_hr_distribution(sqi_ibis, bins=50, title_append=plot_txt)
 
     sqi_ibi_ratio = sqi_ibis[sqi_ibis.sqi_ibi_ratio_group == True]
-
-    Plots.group_hr_distribution(sqi_ibi_ratio, bins = 50)
+    rows = len(sqi_ibi_ratio)
+    plot_txt = f"SQI: IBI Max/Min, Total Hear Beats: str({rows})"
+    Plots.group_hr_distribution(sqi_ibi_ratio, bins = 50, title_append=plot_txt)
     breakpoint()
 
 if __name__ == "__main__":

@@ -97,10 +97,10 @@ class Plots:
         plt.title(f"Beat Id: {beat_idx}")
         plt.show()
     
-    def group_hr_distribution(df,bins):
+    def group_hr_distribution(df,bins, title_append=""):
         group_bpms = df.drop_duplicates(subset=['group_id','group_bpm'])['group_bpm']
         plt.hist(group_bpms, bins=bins, edgecolor='black', alpha=0.7)
         plt.xlabel('BPM')
         plt.ylabel('Frequency')
-        plt.title('Distribution of HRs')
+        plt.title(f'Distribution of HRs: {title_append}')
         plt.show()
