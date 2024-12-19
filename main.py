@@ -6,6 +6,7 @@ from src.preprocessors.ppg_preprocess import PPGPreProcessor
 from src.processors.beat_detectors.beat_detection import HeartBeatDetector
 from src.processors.sqi.beat_organiser import BeatOrganiser
 from src.processors.biomarkers.basic_biomarkers import BasicBiomarkers
+from src.processors.biomarkers.pulse_wave_features import PulseWaveFeatures
 from src.processors.sqi.factory import SQIFactory
 
 from src.visuals.plots import Plots
@@ -108,6 +109,7 @@ def main():
     data = biomarkers.compute_bpm_from_ibi_group()
     biomarkers.compute_group_ibi_stats()
     
+    # Plot HR distribution
     beats = len(data[data.is_beat_peak == True])
     plot_txt = f"Beats = {str(beats)}"
     Plots.group_hr_distribution(data, bins=50, title_append = plot_txt)    
@@ -132,6 +134,10 @@ def main():
     rows = len(sqi_ibi_ratio[sqi_ibi_ratio.is_beat_peak == True ])
     plot_txt = f"SQI: IBI Max/Min, Total Hear Beats: str({rows})"
     Plots.group_hr_distribution(sqi_ibi_ratio, bins = 50, title_append=plot_txt)
+
+    # Compute Pulse Wave Features (pwf)
+    pwf = PulseWaveFeatures(data) 
+    data = pwf.compute()
 
     breakpoint()
 
