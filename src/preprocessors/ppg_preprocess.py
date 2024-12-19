@@ -95,6 +95,8 @@ class PPGPreProcessor:
         for section in sections:
             section = section.copy()
             section['timestamp'] = pd.to_datetime(section['timestamp_ms'], unit='ms')
+            section = section.set_index('timestamp')
+
             # Resample to target frequency
             resampled_section = section.resample(target_freq_str).interpolate(method='linear')
 
