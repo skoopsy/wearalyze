@@ -46,6 +46,65 @@ class PPGPreProcessor:
             section_df['section_id'] = i
 
         return valid_sections
+    
+    def compute_target_sample_freq(self, sections: list(), downsampling_factor=1):
+        """
+        Produces a target frequency for pandas to resample data with regular
+        time intervals.
+
+        Args:
+            sections (list of pd.DataFrame): sections of data thresholded for
+                 compliance (may mitigate dynamic sampling issues)
+            downsampling_factor (int): optional incase down sampling is required
+        
+        Return:
+            str frequency string for pandas resampling
+        """
+
+        # Combine all sections into one for frequency calculation
+        combined = pd.concat(sections, ignore_index = true)
+        combined = combined.sort_values('timestamp_ms')
+
+        # Calc intervals
+        intervals_ms = combined['timestamp_ms'].diff().dropna()
+        
+        median_interval_ms = intervals_ms.median() # In ms
+
+        freq = 1000.0 / median_interval_ms
+
+        rounded_freq = round(freq)
+
+        final_freq = rounded_freq / downsampling_factor
+
+        interval_ms = 1000.0 / final_freq\
+        interval_ms = round(interval_ms, 3)
+            
+        interval_str = f'{int(interval_ms)}L'
+
+        return interval_str
+
+    def interpolate_to_regular_intervals(self, sections: pd.DataFrame, downsampling_factor=1):
+
+        """
+        Interpolate es section to a regular interval using deived target frequency. This regularises the time interval of measured data. 
+        """
+        target_freq_str = self.compute_target_sample_freq(sections, downsampling_factor=downsampling_factor)
+
+        resampled_sections = []
+        
+        for section in sections:
+            section = section.copy()
+            section['timestamp'] = pd.to_datetime(section['timestamp_ms'], unit='ms')
+            # Resample to target frequency
+            resampled_section = section.resample(target_freq_str).interpolate(method='linear')
+
+            # Convert back to columns
+            resampled_section['timestamp_ms'] = resampled_section.index.view(np.int64) / 10**6
+            resampled_section = resampled_section.reset_index()
+            resampled_sections.append(resampled_section)
+
+        return resampled_sections 
+        
 
     def filter_cheby2(self, sections):
         """
