@@ -87,6 +87,9 @@ class PPGPreProcessor:
         interval_ms = round(interval_ms, 3)
             
         interval_str = f'{int(interval_ms)}ms'
+        
+        print(f'Detected measured sample frequency: {final_freq} Hz')
+        print(f'{interval_str}')
 
         return interval_str
 
@@ -96,20 +99,25 @@ class PPGPreProcessor:
         Interpolate es section to a regular interval using deived target frequency. This regularises the time interval of measured data. 
         """
         target_freq_str = self.compute_target_sample_freq(sections, downsampling_factor=downsampling_factor)
-
         resampled_sections = []
         
         for section in sections:
             section = section.copy()
             section['timestamp'] = pd.to_datetime(section['timestamp_ms'], unit='ms')
             section = section.set_index('timestamp')
-
-            # Resample to target frequency
-            resampled_section = section.resample(target_freq_str).interpolate(method='linear')
-
+            
+            numeric_cols = section.select_dtypes(include='number').columns
+            # Resample to target frequencections[0[
+            #resampled_section = section[numeric_cols].resample("7ms").interpolate(method='linear')
+            resampled_section = section[numeric_cols].asfreq("8ms")             
             # Convert back to columns
             resampled_section['timestamp_ms'] = resampled_section.index.view(np.int64) / 10**6
+            
             resampled_section = resampled_section.reset_index()
+
+            # Drop NaNs which can be produced when interpolating
+            resampled_section = resampled_section.dropna()
+            
             resampled_sections.append(resampled_section)
 
         return resampled_sections 

@@ -2,7 +2,24 @@ import matplotlib.pyplot as plt
 
 class Plots:
     def __init__(self):
-        pass       
+        pass    
+    
+    def ppg_series(ppg_series):
+        plt.figure()
+        plt.plot(ppg_series)
+        plt.xlabel("Idx")
+        plt.ylabel("PPG (A.U.)")
+        plt.show()
+    
+    def ppg_series_compare(series1, series2):
+        plt.figure()
+        plt.scatter(x=(series1.timestamp_ms-series1.timestamp_ms.iloc[-1]),y=series1.ppg, label="series1", s=5)
+        plt.scatter(x=(series2.timestamp_ms-series2.timestamp_ms.iloc[-1]),y=series2.ppg, label="series2", s=5)
+        plt.xlabel("Idx")
+        plt.ylabel("PPG (A.U.)")
+        plt.legend()
+        plt.show()
+
     def plot_ppg_sections_vs_time(sections):
         """Plot original and filtered sections of PPG data."""
 

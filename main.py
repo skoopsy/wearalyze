@@ -56,14 +56,16 @@ def main():
         preprocessor = PPGPreProcessor(data, config)
         #TODO thresholding might not work for polar, only corsano:
         sections = preprocessor.create_thresholded_sections() # Get sections where device was worn
-       
+
         if verbosity > 1:
             for i, section in enumerate(sections):
                 print(f"Section {i+1} data points: {len(section)}") 
 
-
+        
         # Apply resmapling to regularise intervals of measured data
         resampled_sections = preprocessor.interpolate_to_regular_intervals(sections)
+        #Plots.ppg_series(resampled_sections[3].ppg)
+        Plots.ppg_series_compare(sections[3], resampled_sections[3])
        
         breakpoint()
  
