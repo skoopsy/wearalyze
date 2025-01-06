@@ -52,15 +52,13 @@ def test_standardise(temp_csv_file):
     standardised_data = loader.standardise(raw_data)
     
     # Verify standardised data is df
-    assert isinstance(standardised_data, pd.DataFrame), "Standardised data must be in padas Dataframe"
+    assert isinstance(standardised_data, pd.DataFrame), "Standardised data must be in pandas Dataframe"
     
     # Verify structure
     expected_columns = [
-        "timestamp", "date", "metric_id", "chunk_index",
-        "quality", "body_pose", "led_pd_pos", "offset",
-        "exp", "led", "gain", "value", "datetime", "timestamp_ms", "ppg"
+        "datetime", "timestamp_ms", "ppg"
     ]
-    assert list(standardised_data.columns) == expected_columns, "Standardised columns should match expected structure"
+    assert list(standardised_data.columns) == expected_columns, f"Standardised columns should match expected structure: {standardised_data.columns}"
 
     # Verify that standardised data is correct
     assert len(standardised_data) == 3, "Standardised data should have same rows as original"

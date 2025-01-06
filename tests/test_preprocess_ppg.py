@@ -36,6 +36,6 @@ def test_create_thresholded_sections(sample_data, sample_config):
     #print(sections)
 
     assert len(sections) == 10
-    assert sections[0]['data_points'].iloc[0] == 6
+    assert sections[0]['ppg'].iloc[0] == 22
 
 #TODO make cheby2 filter check, bit more complicated
