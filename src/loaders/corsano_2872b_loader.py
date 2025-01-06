@@ -42,9 +42,9 @@ class Corsano2872bLoader(BaseLoader):
    
         # Rename the ppg channel
         data['ppg'] = data['value']
-
-        # Maybe remove unused data here if mem requirements get too big
-        # data = data [['timestamp_ms, 'ppg']]
+    
+        # Make df standardised, drop non numeric columns
+        data = data[['datetime','timestamp_ms', 'ppg']]
 
         return data   
 

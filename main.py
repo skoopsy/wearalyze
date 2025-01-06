@@ -56,13 +56,22 @@ def main():
         preprocessor = PPGPreProcessor(data, config)
         #TODO thresholding might not work for polar, only corsano:
         sections = preprocessor.create_thresholded_sections() # Get sections where device was worn
-        
+
         if verbosity > 1:
             for i, section in enumerate(sections):
                 print(f"Section {i+1} data points: {len(section)}") 
+
         
+        # Apply resmapling to regularise intervals of measured data
+        # keeps sample freq the same
+        resample_freq, _, _ = preprocessor.compute_sample_freq(sections)
+        resampled_sections = preprocessor.resample(sections, resample_freq)
+
+        #Plots.ppg_series(resampled_sections[3].ppg)
+        Plots.ppg_series_compare_datetime(sections[0].reset_index(), resampled_sections[0]) 
+ 
         # Apply bandpass filter - Creates new column 'filtered_value' in df
-        preprocessor.filter_cheby2(sections)
+        preprocessor.filter_cheby2(resampled_sections)
         
         # Debugging prints
         if verbosity >= 1:
@@ -73,7 +82,7 @@ def main():
     
         # Detect and annotate heart beats
         heartbeat_detector = HeartBeatDetector(config)
-        combined_sections, all_beats = heartbeat_detector.process_sections(sections)
+        combined_sections, all_beats = heartbeat_detector.process_sections(resampled_sections)
        
         if verbosity >= 1:
             print("Heart Beat Detection Complete")
