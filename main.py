@@ -63,11 +63,12 @@ def main():
 
         
         # Apply resmapling to regularise intervals of measured data
-        resampled_sections = preprocessor.interpolate_to_regular_intervals(sections)
+        # keeps sample freq the same
+        resample_freq, _, _ = preprocessor.compute_sample_freq(sections)
+        resampled_sections = preprocessor.resample(sections, resample_freq)
+
         #Plots.ppg_series(resampled_sections[3].ppg)
-        Plots.ppg_series_compare(sections[3], resampled_sections[3])
-       
-        breakpoint()
+        Plots.ppg_series_compare_datetime(sections[0].reset_index(), resampled_sections[0]) 
  
         # Apply bandpass filter - Creates new column 'filtered_value' in df
         preprocessor.filter_cheby2(resampled_sections)

@@ -54,10 +54,9 @@ class PPGPreProcessor:
 
         return valid_sections
     
-    def compute_target_sample_freq(self, sections: list(), downsampling_factor=1):
+    def compute_sample_freq(self, sections: list(), downsampling_factor=1):
         """
-        Produces a target frequency for pandas to resample data with regular
-        time intervals.
+        Computess the sampling frequency of input data
 
         Args:
             sections (list of pd.DataFrame): sections of data thresholded for
@@ -65,7 +64,9 @@ class PPGPreProcessor:
             downsampling_factor (int): optional incase down sampling is required
         
         Return:
-            str frequency string for pandas resampling
+            int Computed sample frequency
+            int Computed sample period (miliseconds)
+            str Computed sample period string for pandas resampling
         """
 
         # Combine all sections into one for frequency calculation
@@ -91,37 +92,40 @@ class PPGPreProcessor:
         print(f'Detected measured sample frequency: {final_freq} Hz')
         print(f'{interval_str}')
 
-        return interval_str
+        return final_freq, interval_ms, interval_str
 
-    def interpolate_to_regular_intervals(self, sections: pd.DataFrame, downsampling_factor=1):
-
+   
+    def resample(self, sections: pd.DataFrame, resample_freq):
         """
-        Interpolate es section to a regular interval using deived target frequency. This regularises the time interval of measured data. 
+        Resample time series data
         """
-        target_freq_str = self.compute_target_sample_freq(sections, downsampling_factor=downsampling_factor)
         resampled_sections = []
-        
-        for section in sections:
-            section = section.copy()
-            section['timestamp'] = pd.to_datetime(section['timestamp_ms'], unit='ms')
-            section = section.set_index('timestamp')
-            
-            numeric_cols = section.select_dtypes(include='number').columns
-            # Resample to target frequencections[0[
-            #resampled_section = section[numeric_cols].resample("7ms").interpolate(method='linear')
-            resampled_section = section[numeric_cols].asfreq("8ms")             
-            # Convert back to columns
-            resampled_section['timestamp_ms'] = resampled_section.index.view(np.int64) / 10**6
-            
-            resampled_section = resampled_section.reset_index()
 
-            # Drop NaNs which can be produced when interpolating
-            resampled_section = resampled_section.dropna()
+        for section in sections:
             
-            resampled_sections.append(resampled_section)
+            # Define target sampling frequency in milliseconds
+            resample_period_ms = int(1000 / (resample_freq))
+
+            # Create a regular time grid in milliseconds from timestamp ms
+            start_time_ms = section['timestamp_ms'].min()
+            end_time_ms = section['timestamp_ms'].max()
+            reg_time_index_ms = np.arange(start_time_ms, end_time_ms, resample_period_ms)
+
+            # Interpolate PPG using timestamp_ms
+            interpolated_ppg = np.interp(
+                reg_time_index_ms, section['timestamp_ms'], section['ppg']
+            )
+
+            # Create a new DataFrame for the resampled section
+            section_resampled = pd.DataFrame({
+                'timestamp_ms': reg_time_index_ms,
+                'ppg': interpolated_ppg
+            })
+            
+            resampled_sections.append(section_resampled)
 
         return resampled_sections 
-        
+             
 
     def filter_cheby2(self, sections):
         """
