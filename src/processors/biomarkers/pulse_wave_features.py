@@ -36,13 +36,19 @@ class PulseWaveFeatures:
         )
 
     def features_first_derivative(self):
+
+        # Create boolian column to mark zero_crossing points
+        data.groupby('group_id')['first_derivative'].apply(process_beat_zero_crossings)
+        
+        zero_crossing_rows = data[data['1stderiv_zero_crossing']]        
+        
         # Systole - first zero crossing point
         # Should be after the first peak
-        systole_peak =        
+        systole_peak = 0       
 
         # Diastole Peak - Third zero crossing point
         # Shold be after the second peak
-        diastole_peak = 
+        diastole_peak = 0
         pass
 
     def features_second_derivative(self):
@@ -94,3 +100,15 @@ class PulseWaveFeatures:
 
         return zero_crossings
 
+    def process_beat_zero_crossings(beat):
+        """
+        Computes the zero crossing points of the signal and marks them in a 
+        boolean column of a df
+        """        
+
+        zero_crossings = find_zero_crossings(beat['first_derivative'].values)
+        beat['1stderiv_zero_crossing'] = False
+        beat.loc[beat.index[zero_crossings], '1stderiv_zero_crossing'] = True
+        
+        return beat
+        
