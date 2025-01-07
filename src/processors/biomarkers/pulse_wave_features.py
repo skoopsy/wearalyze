@@ -56,13 +56,18 @@ class PulseWaveFeatures:
 
     def find_zero_crossings(signal: pd.Series, crossing_type: str):
         """
-        Find where a signal crosses zero in a specified direction and returns
-        the index and value
+        Returns the index of where a signal crosses zero in a specified 
+        direction (from negative to positive, positive to negative, or both). 
+        
+        The returned index will be the data point before or at the zero
+        point as opposed to the data point after the zero-crossing.
 
         Args:
             signal (pd.Series)
-            crossing_type (str): Specify zero crossing direction: pos2neg or neg2pos
-
+            crossing_type (str): Specify zero crossing direction: pos2neg
+                                                                  neg2pos
+                                                                  both
+        
         Returns:
             zero_crossings (list(list)): List of zero crossing points with 
                                          index, value
@@ -80,10 +85,10 @@ class PulseWaveFeatures:
             zero_crossings = ((pos[:-1] & npos[1:])).nonzero()[0]
         if crossing_type == "neg2pos":
             zero_crossings = (pos[:-1] & npos[1:]) 
-        if crossing_type == "all":
+        if crossing_type == "both":
             zero_crossings = ((pos[:-1] & npos[1:]) | (npos[:-1] & pos[1:])).nonzero()[0]
         elif:
-            raise ValueError("Invalid crossing_type: {crossing_type}  .Please use pos2neg, neg2pos, or all")
+            raise ValueError("Inalid crossing_type: {crossing_type}  .Please use pos2neg, neg2pos, or both")
 
         zero_crossings = zero_crossings.tolist() # Convert back to list
 
