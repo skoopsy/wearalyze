@@ -22,24 +22,21 @@ class PulseWaveFeatures:
 
     def first_derivative(self):
         self.data['first_derivative'] = (
-            self.data.groupby('group_id')['filtered_value'].diff() /
-            self.data.groupby('group_id')['timestamp_ms'].diff()
+            self.data.groupby('group_id')['filtered_value'].diff() 
         )
 
     def second_derivative(self):
         self.data['second_derivative'] = (
-            self.data.groupby('group_id')['first_derivative'].diff() /
-            self.data.groupby('group_id')['timestamp_ms'].diff()
+            self.data.groupby('group_id')['first_derivative'].diff() 
         )
     
     def third_derivative(self):
         self.data['third_derivative'] = (
-            self.data.groupby('group_id')['second_derivative'].diff() /
-            self.data.groupby('group_id')['timestamp_ms'].diff()
+            self.data.groupby('group_id')['second_derivative'].diff() 
         )
 
     def features_first_derivative(self):
-        
+               
         pass
 
     def features_second_derivative(self):
