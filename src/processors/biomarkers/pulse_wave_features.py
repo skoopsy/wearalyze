@@ -36,7 +36,13 @@ class PulseWaveFeatures:
         )
 
     def features_first_derivative(self):
-               
+        # Systole - first zero crossing point
+        # Should be after the first peak
+        systole_peak =        
+
+        # Diastole Peak - Third zero crossing point
+        # Shold be after the second peak
+        diastole_peak = 
         pass
 
     def features_second_derivative(self):
@@ -46,4 +52,40 @@ class PulseWaveFeatures:
         pass
 
     def features_y(self):
-        :pass
+        pass
+
+    def find_zero_crossings(signal: pd.Series, crossing_type: str):
+        """
+        Find where a signal crosses zero in a specified direction and returns
+        the index and value
+
+        Args:
+            signal (pd.Series)
+            crossing_type (str): Specify zero crossing direction: pos2neg or neg2pos
+
+        Returns:
+            zero_crossings (list(list)): List of zero crossing points with 
+                                         index, value
+        """    
+
+        zero_crossings = []
+
+        # Convert dtype explicitly as > does it implicitly
+        signal = np.array(signal)
+
+        pos = signal > 0
+        npos = ~pos
+        
+        if crossing_type == "pos2neg":
+            zero_crossings = ((pos[:-1] & npos[1:])).nonzero()[0]
+        if crossing_type == "neg2pos":
+            zero_crossings = (pos[:-1] & npos[1:]) 
+        if crossing_type == "all":
+            zero_crossings = ((pos[:-1] & npos[1:]) | (npos[:-1] & pos[1:])).nonzero()[0]
+        elif:
+            raise ValueError("Invalid crossing_type: {crossing_type}  .Please use pos2neg, neg2pos, or all")
+
+        zero_crossings = zero_crossings.tolist() # Convert back to list
+
+        return zero_crossings
+
