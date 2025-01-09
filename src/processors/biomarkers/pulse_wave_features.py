@@ -94,7 +94,7 @@ class PulseWaveFeatures:
         if crossing_type == "both":
             zero_crossings = ((pos[:-1] & npos[1:]) | (npos[:-1] & pos[1:])).nonzero()[0]
         elif:
-            raise ValueError("Inalid crossing_type: {crossing_type}  .Please use pos2neg, neg2pos, or both")
+            raise ValueError("Inalid crossing_type: {crossing_type} .Please use pos2neg, neg2pos, or both")
 
         zero_crossings = zero_crossings.tolist() # Convert back to list
 
