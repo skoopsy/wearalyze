@@ -2,71 +2,45 @@ import numpy as np
 import pandas as pd
 
 class PulseWaveFeatures:
+
     def __init__(self, data):
         # Time series df input
         self.data = data.copy()
     
+
     def compute(self):
         
         # Sort data, probably unnessicary
-        self.data = self.data.sort_values(by=['group_id','timestamp'])    
+        self.data = self.data.sort_values(by=['global_beat_index','timestamp'])    
     
         # Compute in place on input df
-        # derivatives
+        # signal derivatives
         self.first_derivative()
         self.second_derivative()
         self.third_derivative()
-
-        # Extract features - unused stubs atm
-        self.features_first_derivative()
-        self.features_second_derivative()
-        self.features_third_derivative()
-        self.features_y()
 
         # Build beat-level features df
         beats_features = self.create_beats_features()
 
         return self.data, beats_features
 
+
     def first_derivative(self):
         self.data['sig_1deriv'] = (
-            self.data.groupby('group_id')['filtered_value'].diff() 
+            self.data.groupby('global_beat_index')['filtered_value'].diff() 
         )
+
 
     def second_derivative(self):
         self.data['sig_2deriv'] = (
-            self.data.groupby('group_id')['first_derivative'].diff() 
+            self.data.groupby('global_beat_index')['first_derivative'].diff() 
         )
     
+
     def third_derivative(self):
         self.data['sig_3deriv'] = (
-            self.data.groupby('group_id')['second_derivative'].diff() 
+            self.data.groupby('global_beat_index')['second_derivative'].diff() 
         )
-
-    def features_first_derivative(self):
-
-        # Create boolian column to mark zero_crossing points
-        #data.groupby('group_id')['first_derivative'].apply(process_beat_zero_crossings)
-        
-        #zero_crossing_rows = data[data['1stderiv_zero_crossing']]        
-        
-        # Systole - first zero crossing point
-        # Should be after the first peak
-        #systole_peak = 0       
-
-        # Diastole Peak - Third zero crossing point
-        # Shold be after the second peak
-        #diastole_peak = 0
-        pass
-
-    def features_second_derivative(self):
-        pass
-
-    def features_third_derivative(self):
-        pass
-
-    def features_y(self):
-        pass
 
 
     def create_beats_features(self) -> pd.DataFrame:
@@ -81,43 +55,46 @@ class PulseWaveFeatures:
             beats_features : pd.DataFrame
         """
 
-        # dict of nfeatures for each group_id
-        beat_feature_rows = []
+        beats_features = []
 
-        # Group data into beats:
-        for group_id, grp in self.data.groupby('group_id'):
+        for beat_id, beat in self.data.groupby('global_beat_index'):
             
-            ## First Derivative ##
-            #TODO: move this to first derivative features function and call here
-            # Find zero-crossing indices            
-            crossing_indicies = zelf.find_zero_crossings(
-                grp['sig_1deriv'].values,
-                crossing_type='both'
-            )
+            beat_features = {'global_beat_index': beat_id}
 
-            # Find zero-crossing timestamps
-            crossing_times = grp['timestamp'].iloc[crossing_indicies].values
+            # Feature computations
+            beat_features.update(self.compute_features_1deriv(beat))
+            beat_features.update(self.compute_features_2deriv(beat))
+            beat_features.update(self.compute_features_3deriv(beat))
+            
+            # Merge beat_dict into array with all beats 
+            beats_features.append(beat_features)
 
-            # Store corossings
-            row_dict = {
-                'group_id': group_id,
-                'num_zero_crossings': len(crossing_times)
+        return pd.DataFrame(beats_features)
+            
+            
+    def compute_features_1deriv(self, beat: pd.DataFrame) -> dict:
+        
+        # Zero-crossings
+        cossing_indices = self.find_zero_crossings(beat["sig_1deriv"].values,
+                                                   crossing_type="pos2neg"
+                                                  )
+        crossing_times = beat["timestamp"].iloc[crossing_indices].values
+
+        feature_dict = {
+            "1deriv_num_zero_crossing_pos2neg": len(crossing_times), 
+            #TODO: Make this adative to the list size
+            "1deriv_zero_crossing_1_idx": crossing_indices[0]
             }
-            
-            # change this to be adative to number of zero-crossing times
-            if len(crossing_time >= 1:
-                row_dict['d1_cross_time_1'] = corssing_times[0]
-            
-            else: 
-                row_dict['d1_cross_time_1'] = np.nan
-
         
-            # Append dict to list
-            beat_feature_rows.append(row_dict)
-        
-        beats_features = pd.DataFrame(beat_feature_rows)
+        return feature_dict
 
-        return beats_features
+
+    def compute_features_2deriv(self, beat: pd.DataFrame) -> dict:
+        pass
+
+
+    def compute_features_3deriv(self, beat: pd.DataFrame) -> dict:
+        pass
 
 
     def find_zero_crossings(self, signal: np.ndarray, crossing_type: str) -> np.ndarray:
