@@ -9,9 +9,13 @@ class PulseWaveFeatures:
     
 
     def compute(self):
+        """
+        Returns the full timeseries df with additional processing columns
+        Returns a df of beat features per beat.
+        """ 
         
         # Sort data, probably unnessicary
-        self.data = self.data.sort_values(by=['global_beat_index','timestamp'])    
+        self.data = self.data.sort_values(by=['global_beat_index','timestamp_ms'])    
     
         # Compute in place on input df
         # signal derivatives
@@ -33,13 +37,13 @@ class PulseWaveFeatures:
 
     def second_derivative(self):
         self.data['sig_2deriv'] = (
-            self.data.groupby('global_beat_index')['first_derivative'].diff() 
+            self.data.groupby('global_beat_index')['sig_1deriv'].diff() 
         )
     
 
     def third_derivative(self):
         self.data['sig_3deriv'] = (
-            self.data.groupby('global_beat_index')['second_derivative'].diff() 
+            self.data.groupby('global_beat_index')['sig_2deriv'].diff() 
         )
 
 
@@ -57,11 +61,13 @@ class PulseWaveFeatures:
 
         beats_features = []
 
-        for beat_id, beat in self.data.groupby('global_beat_index'):
+        for global_beat_index, beat in self.data.groupby('global_beat_index'):
             
-            beat_features = {'global_beat_index': beat_id}
+            # Set the beat id for the beat being analysed
+            beat_features = {'global_beat_index': global_beat_index}
 
             # Feature computations
+            beat_features.update(self.compute_features_y(beat))
             beat_features.update(self.compute_features_1deriv(beat))
             beat_features.update(self.compute_features_2deriv(beat))
             beat_features.update(self.compute_features_3deriv(beat))
@@ -71,29 +77,65 @@ class PulseWaveFeatures:
 
         return pd.DataFrame(beats_features)
             
-            
+    def compute_features_y(self, beat: pd.DataFrame) -> dict:
+        
+        # Systole
+        systole_idx = beat['filtered_value'].idxmax()
+        systole_time = beat['timestamp_ms'].iloc[systole_idx]
+   
+        feature_dict = {
+            "systole_idx": systole_idx,
+            "systole_time": systole_time
+            }
+        
+        return feature_dict
+
+
     def compute_features_1deriv(self, beat: pd.DataFrame) -> dict:
         
         # Zero-crossings
-        cossing_indices = self.find_zero_crossings(beat["sig_1deriv"].values,
+        zero_crossing_idxs = self.find_zero_crossings(beat["sig_1deriv"].values,
                                                    crossing_type="pos2neg"
                                                   )
-        crossing_times = beat["timestamp"].iloc[crossing_indices].values
+        zero_crossing_times = beat["timestamp_ms"].iloc[zero_crossing_idxs].values
 
+
+        # Systole Location
+        # Can just use this to confirm max of orig sig fiducial, ignore for now
+        
+        # Diastole Location
+        # When the diastolic peak is not present (such as in older subjects), the corresponding location of this point can be estimated as the first local maxima in the second derivative after the e- wave
+ 
+        # Collect features into dict
         feature_dict = {
-            "1deriv_num_zero_crossing_pos2neg": len(crossing_times), 
-            #TODO: Make this adative to the list size
-            "1deriv_zero_crossing_1_idx": crossing_indices[0]
+            "1deriv_num_zero_crossing_pos2neg": len(zero_crossing_times), 
+            #TODO: Make this adaptive to the list size
+            "1deriv_zero_crossing_1_idx": zero_crossing_idxs[0]
             }
         
         return feature_dict
 
 
     def compute_features_2deriv(self, beat: pd.DataFrame) -> dict:
+        
+        # a wave
+        # b wave
+        # c wave
+        # d wave
+        # e wave
+
+        # dicrotic notch
+
         pass
 
 
     def compute_features_3deriv(self, beat: pd.DataFrame) -> dict:
+        
+        # p1 can be identified by searching for the first local maximum of the third derivative after the occurrence of the b-wave in the SDPPG,
+        
+        # a candidate p2 can be identified as the last local minimum of the third derivative before the d-wave, or as the local maximum of the original PPG between this candidate and the appearance of the dicrotic notch
+        
+
         pass
 
 
@@ -130,9 +172,9 @@ class PulseWaveFeatures:
             zero_crossings = np.where(npos[:-1] & pos[1:])[0] 
 
         elif crossing_type == "both":
-            zero_crossings = np.where.((pos[:-1] & npos[1:]) | (npos[:-1] & pos[1:]))[0]
+            zero_crossings = np.where((pos[:-1] & npos[1:]) | (npos[:-1] & pos[1:]))[0]
         else:
-            raise ValueError(f"Inalid crossing_type: {crossing_type}."
+            raise ValueError(f"Invalid crossing_type: {crossing_type}."
                               "Please use 'pos2neg', 'neg2pos', or 'both'."
                             )
 

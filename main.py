@@ -137,7 +137,7 @@ def main():
 
     # Compute Pulse Wave Features (pwf)
     pwf = PulseWaveFeatures(data) 
-    data = pwf.compute()
+    data, beat_features = pwf.compute()
 
     breakpoint()
 
