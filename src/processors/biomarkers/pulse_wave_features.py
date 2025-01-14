@@ -101,7 +101,10 @@ class PulseWaveFeatures:
         features_dict = {}
         
         # Get zero crossings
-        zero_cross = _compute_zero_crossings_dict(beat, sig_name="sig_1deriv")
+        zero_cross = _compute_zero_crossings_dict(beat, 
+                                                  sig_name="sig_1deriv",
+                                                  crossing_type="both"
+                     )
         features_dict.update({"zero_crossings": zero_cross})
 
         # Systolic Peak
@@ -139,11 +142,19 @@ class PulseWaveFeatures:
 
     def compute_features_2deriv(self, beat: pd.DataFrame) -> dict:
          
-        # a wave
-        # b wave
-        # c wave
-        # d wave
-        # e wave
+        features_dict = {}
+        
+        # Get zero crossings
+        zero_cross = _compute_zero_crossings_dict(beat, sig_name="sig_2deriv")
+        features_dict.update({"zero_crossings": zero_cross})
+ 
+        if zero_cross["sum"] = 5:
+            # a wave
+            a_wave = {"a_wave": zero_cross[0]}
+            # b wave
+            # c wave
+            # d wave
+            # e wave
 
         # dicrotic notch
 
@@ -169,19 +180,20 @@ class PulseWaveFeatures:
         pass
 
         
-    def _compute_zero_crossings_dict(self, beat: pd.DataFrame, sig_name: str) -> dict:
+    def _compute_zero_crossings_dict(self, beat: pd.DataFrame, sig_name: str, crossing_type: str) -> dict:
         """
         Uses find_zero_crossings to collect zero corssing points and add to a
         nested dict
 
         Args:
             sig_name (str): df key for the signal column being analysed
+            crossing_type (str): pos2neg, neg2pos, both
         Returns:
             feature_dict (dict): Nested dict of zero crossing points
         """
         # Zero-crossings
         zero_crossing_idxs = self._find_zero_crossings(beat[sig_name].values,
-                                                   crossing_type="pos2neg"
+                                                   crossing_type=crossing_type
                                                   )
         zero_crossing_times = beat["timestamp_ms"].iloc[zero_crossing_idxs].values
 
