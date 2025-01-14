@@ -101,7 +101,7 @@ class PulseWaveFeatures:
         features_dict = {}
         
         # Get zero crossings
-        zero_cross = _compute_zero_crossings_dict(beat, sig_name="1deriv")
+        zero_cross = _compute_zero_crossings_dict(beat, sig_name="sig_1deriv")
         features_dict.update({"zero_crossings": zero_cross})
 
         # Systolic Peak
@@ -138,7 +138,7 @@ class PulseWaveFeatures:
 
 
     def compute_features_2deriv(self, beat: pd.DataFrame) -> dict:
-        
+         
         # a wave
         # b wave
         # c wave
@@ -175,12 +175,12 @@ class PulseWaveFeatures:
         nested dict
 
         Args:
-            sig_name (str): Key for dict, based on signal used for zero_crossings
+            sig_name (str): df key for the signal column being analysed
         Returns:
             feature_dict (dict): Nested dict of zero crossing points
         """
         # Zero-crossings
-        zero_crossing_idxs = self._find_zero_crossings(beat["sig_1deriv"].values,
+        zero_crossing_idxs = self._find_zero_crossings(beat[sig_name].values,
                                                    crossing_type="pos2neg"
                                                   )
         zero_crossing_times = beat["timestamp_ms"].iloc[zero_crossing_idxs].values
