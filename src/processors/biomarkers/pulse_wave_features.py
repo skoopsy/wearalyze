@@ -93,41 +93,41 @@ class PulseWaveFeatures:
 
     def compute_features_1deriv(self, beat: pd.DataFrame) -> dict:
         
-        features_dict = {"1deriv": {}}
+        features_dict = {}
         
         # Get zero crossings
         zero_cross = compute_zero_crossings_dict(beat, sig_name="1deriv")
-        features_dict.update("zero_crossings": zero_cross)
+        features_dict.update({"zero_crossings": zero_cross})
 
         # Systolic Peak
         if zero_cross["sum"] > 0:
-            systole = dict( "detected": True,
-                            "time": zero_cross["times"][0],
-                            "idx": zero_cross["idxs"][0] 
-                          )
+            systole = { "detected": True,
+                        "time": zero_cross["times"][0],
+                        "idx": zero_cross["idxs"][0] 
+            }
         else: 
-            systole = dict( "detected": False )
-        features_dict.update("systole": systole)
+            systole = {"detected": False}
+        features_dict.update({"systole": systole})
         
         # Systole Crest Time
         if systole["detected"]:
             systole_crest_time_ms = systole["time"] - beat["timestamp_ms"][0]
-            features_dict.update("systole_crest_time_ms": systole_crest_time_ms)
+            features_dict.update({"systole_crest_time_ms": systole_crest_time_ms})
             
         # Diastolic peak
         if zero_cross["sum"] > 1:
-            diastole = dict( "detected": True,
-                             "time": zero_cross["times"][1],
-                             "idx": zero_cross["idxs"][1]
-                           )
+            diastole = { "detected": True,
+                         "time": zero_cross["times"][1],
+                         "idx": zero_cross["idxs"][1]
+            }
         else:
-            diastole = dict( "detected": False )
-        features_dict.update("diastole": diastole)
+            diastole = {"detected": False}
+        features_dict.update({"diastole": diastole})
 
         # deltaT Systole-Diastole  (time diff)
-        if diastole["detected"] && systole["detected"]:
+        if diastole["detected"] and systole["detected"]:
             deltaT = diastole["time"] - systole["time"]
-            features_dict.update("systole-diastole_deltaT_ms": deltaT ) 
+            features_dict.update({"systole-diastole_deltaT_ms": deltaT}) 
     
         return features_dict
         
