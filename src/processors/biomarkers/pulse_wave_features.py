@@ -97,7 +97,8 @@ class PulseWaveFeatures:
         
         # Get zero crossings
         zero_cross = compute_zero_crossings_dict(beat, sig_name="1deriv")
-        
+        features_dict.update("zero_crossings": zero_cross)
+
         # Systolic Peak
         if zero_cross["sum"] > 0:
             systole = dict( "detected": True,
@@ -106,7 +107,8 @@ class PulseWaveFeatures:
                           )
         else: 
             systole = dict( "detected": False )
-
+        features_dict.update("systole": systole)
+        
         # Systole Crest Time
         if systole["detected"]:
             systole_crest_time_ms = systole["time"] - beat["timestamp_ms"][0]
@@ -120,12 +122,15 @@ class PulseWaveFeatures:
                            )
         else:
             diastole = dict( "detected": False )
-        
+        features_dict.update("diastole": diastole)
+
         # deltaT Systole-Diastole  (time diff)
         if diastole["detected"] && systole["detected"]:
             deltaT = diastole["time"] - systole["time"]
             features_dict.update("systole-diastole_deltaT_ms": deltaT ) 
-
+    
+        return features_dict
+        
     def compute_zero_crossings_dict(self, beat: pd.DataFrame, sig_name: str) -> dict:
         """
         Uses find_zero_crossings to collect zero corssing points and add to a
