@@ -150,7 +150,7 @@ class PulseWaveFeatures:
                                                   crossing_type="both")
         features_dict.update({"zero_crossings": zero_cross})
  
-        if zero_cross["sum"] = 5:
+        if zero_cross["sum"] > 4 :
             
             features_dict.update({"abcde_detected": True})            
            
@@ -192,11 +192,15 @@ class PulseWaveFeatures:
         else: 
             dicrotic_notch = {"detected": False}
  
-        # Diastole Location
-        # When the diastolic peak is not present (such as in older subjects), the corresponding location of this point can be estimated as the first local maxima in the second derivative after the e- wave
-        
+        # Diastole Location Estimate - When the diastolic peak is not present (such as in older subjects), the corresponding location of this point can be estimated as the first local maxima in the second derivative after the e- wave
+        if zero_cross["sum"] > 5:
+            diastole_estimate = {"detected": True,
+                                 "time": zero_cross["times"][5],
+                                 "idx":zero_cross["idxs"][5]}
+        else: 
+            diastole_estimate = {"detected": False}
 
-        return feature_dict
+        return features_dict
 
 
     def compute_features_3deriv(self, beat: pd.DataFrame) -> dict:
