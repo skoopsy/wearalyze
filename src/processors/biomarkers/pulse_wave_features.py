@@ -101,7 +101,7 @@ class PulseWaveFeatures:
         features_dict = {}
         
         # Get zero crossings
-        zero_cross = _compute_zero_crossings_dict(beat, 
+        zero_cross = self._compute_zero_crossings_dict(beat, 
                                                   sig_name="sig_1deriv",
                                                   crossing_type="both"
                      )
@@ -156,27 +156,27 @@ class PulseWaveFeatures:
            
             # a wave
             a_wave = {"time": zero_cross["times"][0],
-                      "idx": zero_cross["idx"[0]}
+                      "idx": zero_cross["idxs"][0]}
             features_dict.update({"a_wave":a_wave})
 
             # b wave
             b_wave = {"time": zero_cross["times"][1],
-                      "idx": zero_cross["idx"[1]}
+                      "idx": zero_cross["idxs"][1]}
             features_dict.update({"b_wave":b_wave})
 
             # c wave
             c_wave = {"time": zero_cross["times"][2],
-                      "idx": zero_cross["idx"[2]}
-            features_dict.update({i"c_wave":c_wave})
+                      "idx": zero_cross["idxs"][2]}
+            features_dict.update({"c_wave":c_wave})
 
             # d wave
             d_wave = {"time": zero_cross["times"][3],
-                      "idx": zero_cross["idx"[3]}
+                      "idx": zero_cross["idxs"][3]}
             features_dict.update({"d_wave":d_wave})
 
             # e wave
             e_wave = {"time": zero_cross["times"][4],
-                      "idx": zero_cross["idx"[4]}
+                      "idx": zero_cross["idxs"][4]}
             features_dict.update({"e_wave":e_wave})
 
         else:
@@ -205,8 +205,18 @@ class PulseWaveFeatures:
 
     def compute_features_3deriv(self, beat: pd.DataFrame) -> dict:
         
-        # p1 can be identified by searching for the first local maximum of the third derivative after the occurrence of the b-wave in the SDPPG,
+         
+        features_dict = {}
         
+        # Get zero crossings
+        zero_cross = _compute_zero_crossings_dict(beat,
+                                                  sig_name="sig_3deriv",
+                                                  crossing_type="both")
+        features_dict.update({"zero_crossings": zero_cross})
+
+        # p1 can be identified by searching for the first local maximum of the third derivative after the occurrence of the b-wave in the SDPPG,
+               
+ 
         # a candidate p2 can be identified as the last local minimum of the third derivative before the d-wave, or as the local maximum of the original PPG between this candidate and the appearance of the dicrotic notch
        
  

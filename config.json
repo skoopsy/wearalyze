@@ -1,6 +1,7 @@
 {
 	"outputs":{
-        "print_verbosity": 2
+        "print_verbosity": 2,
+        "debug_plots": false
     },
     "data_source":{
 		"device": "corsano-2872b",
