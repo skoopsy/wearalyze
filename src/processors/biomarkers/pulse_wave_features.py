@@ -71,7 +71,8 @@ class PulseWaveFeatures:
             beat_features.update(self.compute_features_1deriv(beat))
             beat_features.update(self.compute_features_2deriv(beat))
             beat_features.update(self.compute_features_3deriv(beat))
-            
+            beat_features.update(self.compute_features_misc(beat))
+ 
             # Merge beat_dict into array with all beats 
             beats_features.append(beat_features)
 
@@ -82,11 +83,15 @@ class PulseWaveFeatures:
         # Systole
         systole_idx = beat['filtered_value'].idxmax()
         systole_time = beat['timestamp_ms'].iloc[systole_idx]
-   
+        
+        # Beat duration
+        beat_duration = beat['timestamp_ms'].iloc[-1] - beat['timestamp_ms'].iloc[0]
+        
         feature_dict = {
             "systole_idx": systole_idx,
-            "systole_time": systole_time
-            }
+            "systole_time": systole_time,
+            "beat_duration": beat_duration 
+        }
         
         return feature_dict
 
@@ -96,7 +101,7 @@ class PulseWaveFeatures:
         features_dict = {}
         
         # Get zero crossings
-        zero_cross = compute_zero_crossings_dict(beat, sig_name="1deriv")
+        zero_cross = _compute_zero_crossings_dict(beat, sig_name="1deriv")
         features_dict.update({"zero_crossings": zero_cross})
 
         # Systolic Peak
@@ -130,8 +135,41 @@ class PulseWaveFeatures:
             features_dict.update({"systole-diastole_deltaT_ms": deltaT}) 
     
         return features_dict
+
+
+    def compute_features_2deriv(self, beat: pd.DataFrame) -> dict:
         
-    def compute_zero_crossings_dict(self, beat: pd.DataFrame, sig_name: str) -> dict:
+        # a wave
+        # b wave
+        # c wave
+        # d wave
+        # e wave
+
+        # dicrotic notch
+
+        # Diastole Location
+        # When the diastolic peak is not present (such as in older subjects), the corresponding location of this point can be estimated as the first local maxima in the second derivative after the e- wave
+
+
+        pass
+
+
+    def compute_features_3deriv(self, beat: pd.DataFrame) -> dict:
+        
+        # p1 can be identified by searching for the first local maximum of the third derivative after the occurrence of the b-wave in the SDPPG,
+        
+        # a candidate p2 can be identified as the last local minimum of the third derivative before the d-wave, or as the local maximum of the original PPG between this candidate and the appearance of the dicrotic notch
+       
+ 
+    def compute_features_misc(self, beat: pd.DataFrame) -> dict:
+        """
+        Any features that require references from y, 1st, 2nd, 3rd derivative, 
+        this should be run after those features have been computed
+        """
+        pass
+
+        
+    def _compute_zero_crossings_dict(self, beat: pd.DataFrame, sig_name: str) -> dict:
         """
         Uses find_zero_crossings to collect zero corssing points and add to a
         nested dict
@@ -142,7 +180,7 @@ class PulseWaveFeatures:
             feature_dict (dict): Nested dict of zero crossing points
         """
         # Zero-crossings
-        zero_crossing_idxs = self.find_zero_crossings(beat["sig_1deriv"].values,
+        zero_crossing_idxs = self._find_zero_crossings(beat["sig_1deriv"].values,
                                                    crossing_type="pos2neg"
                                                   )
         zero_crossing_times = beat["timestamp_ms"].iloc[zero_crossing_idxs].values
@@ -188,34 +226,7 @@ class PulseWaveFeatures:
         return zero_crossings_dict
 
 
-    def compute_features_2deriv(self, beat: pd.DataFrame) -> dict:
-        
-        # a wave
-        # b wave
-        # c wave
-        # d wave
-        # e wave
-
-        # dicrotic notch
-
-        # Diastole Location
-        # When the diastolic peak is not present (such as in older subjects), the corresponding location of this point can be estimated as the first local maxima in the second derivative after the e- wave
-
-
-        pass
-
-
-    def compute_features_3deriv(self, beat: pd.DataFrame) -> dict:
-        
-        # p1 can be identified by searching for the first local maximum of the third derivative after the occurrence of the b-wave in the SDPPG,
-        
-        # a candidate p2 can be identified as the last local minimum of the third derivative before the d-wave, or as the local maximum of the original PPG between this candidate and the appearance of the dicrotic notch
-        
-
-        pass
-
-
-    def find_zero_crossings(self, signal: np.ndarray, crossing_type: str) -> np.ndarray:
+    def _find_zero_crossings(self, signal: np.ndarray, crossing_type: str) -> np.ndarray:
         """
         Returns the index of where a signal crosses zero in a specified 
         direction (from negative to positive, positive to negative, or both). 
