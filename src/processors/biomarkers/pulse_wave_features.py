@@ -93,6 +93,49 @@ class PulseWaveFeatures:
 
     def compute_features_1deriv(self, beat: pd.DataFrame) -> dict:
         
+        features_dict = {"1deriv": {}}
+        
+        # Get zero crossings
+        zero_cross = compute_zero_crossings_dict(beat, sig_name="1deriv")
+        
+        # Systolic Peak
+        if zero_cross["sum"] > 0:
+            systole = dict( "detected": True,
+                            "time": zero_cross["times"][0],
+                            "idx": zero_cross["idxs"][0] 
+                          )
+        else: 
+            systole = dict( "detected": False )
+
+        # Systole Crest Time
+        if systole["detected"]:
+            systole_crest_time_ms = systole["time"] - beat["timestamp_ms"][0]
+            features_dict.update("systole_crest_time_ms": systole_crest_time_ms)
+            
+        # Diastolic peak
+        if zero_cross["sum"] > 1:
+            diastole = dict( "detected": True,
+                             "time": zero_cross["times"][1],
+                             "idx": zero_cross["idxs"][1]
+                           )
+        else:
+            diastole = dict( "detected": False )
+        
+        # deltaT Systole-Diastole  (time diff)
+        if diastole["detected"] && systole["detected"]:
+            deltaT = diastole["time"] - systole["time"]
+            features_dict.update("systole-diastole_deltaT_ms": deltaT ) 
+
+    def compute_zero_crossings_dict(self, beat: pd.DataFrame, sig_name: str) -> dict:
+        """
+        Uses find_zero_crossings to collect zero corssing points and add to a
+        nested dict
+
+        Args:
+            sig_name (str): Key for dict, based on signal used for zero_crossings
+        Returns:
+            feature_dict (dict): Nested dict of zero crossing points
+        """
         # Zero-crossings
         zero_crossing_idxs = self.find_zero_crossings(beat["sig_1deriv"].values,
                                                    crossing_type="pos2neg"
@@ -114,19 +157,30 @@ class PulseWaveFeatures:
             ValueError(f"Invalid crossing_type: {crossing_type}")
          
         # Create feature dict with sum of zero-crossings:
-        feature_dict = {
-            f"1deriv_0cross_sum_{type_str}": len(zero_crossing_times), 
-            }
+        #feature_dict = {
+        #    f"1deriv_0cross_sum_{type_str}": len(zero_crossing_times), 
+        #    }
         
         # Create dynamic dict key str based on num of zero_crossings
-        names = []
-        for idx, val in enumerate(zero_crossing_times):
-            names.append(f"1deriv_0cross_{type_str}_{idx}")
+        #names = []
+        #for idx, val in enumerate(zero_crossing_times):
+        #    names.append(f"1deriv_0cross_{type_str}_{idx}")
 
         # Update feature dict with keys and values for zerocrossing.
-        feature_dict.update(zip(names, zero_crossing_times))
+        #feature_dict.update(zip(names, zero_crossing_times))
 
-        return feature_dict
+        # Create nested features dict
+        zero_crossings_dict = {
+            "sum": {type_str: len(zero_crossing_times)},
+            "times": { type_str: {f"cross_{idx}": val 
+                       for idx, val in enumerate(zero_crossing_times)},
+                },
+             "idxs": { type_str: {f"cross_{idx}": val 
+                       for idx, val in enumerate(zero_crossing_idxs)}
+                }
+        }
+
+        return zero_crossings_dict
 
 
     def compute_features_2deriv(self, beat: pd.DataFrame) -> dict:
