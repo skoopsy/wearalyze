@@ -145,24 +145,58 @@ class PulseWaveFeatures:
         features_dict = {}
         
         # Get zero crossings
-        zero_cross = _compute_zero_crossings_dict(beat, sig_name="sig_2deriv")
+        zero_cross = _compute_zero_crossings_dict(beat,
+                                                  sig_name="sig_2deriv",
+                                                  crossing_type="both")
         features_dict.update({"zero_crossings": zero_cross})
  
         if zero_cross["sum"] = 5:
+            
+            features_dict.update({"abcde_detected": True})            
+           
             # a wave
-            a_wave = {"a_wave": zero_cross[0]}
+            a_wave = {"time": zero_cross["times"][0],
+                      "idx": zero_cross["idx"[0]}
+            features_dict.update({"a_wave":a_wave})
+
             # b wave
+            b_wave = {"time": zero_cross["times"][1],
+                      "idx": zero_cross["idx"[1]}
+            features_dict.update({"b_wave":b_wave})
+
             # c wave
+            c_wave = {"time": zero_cross["times"][2],
+                      "idx": zero_cross["idx"[2]}
+            features_dict.update({i"c_wave":c_wave})
+
             # d wave
+            d_wave = {"time": zero_cross["times"][3],
+                      "idx": zero_cross["idx"[3]}
+            features_dict.update({"d_wave":d_wave})
+
             # e wave
+            e_wave = {"time": zero_cross["times"][4],
+                      "idx": zero_cross["idx"[4]}
+            features_dict.update({"e_wave":e_wave})
 
-        # dicrotic notch
+        else:
+            
+            features_dict.update({"abcde_detected":False})
 
+        # Dicrotic notch
+        if features_dict["abcde_detected"]: 
+            dicrotic_notch = {"detected": True,
+                              "time": e_wave["time"],
+                              "idx": e_wave["idx"]}
+          
+        else: 
+            dicrotic_notch = {"detected": False}
+ 
         # Diastole Location
         # When the diastolic peak is not present (such as in older subjects), the corresponding location of this point can be estimated as the first local maxima in the second derivative after the e- wave
+        
 
-
-        pass
+        return feature_dict
 
 
     def compute_features_3deriv(self, beat: pd.DataFrame) -> dict:
