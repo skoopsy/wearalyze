@@ -103,16 +103,15 @@ class PulseWaveFeatures:
         # Systole Location
         # Can just use this to confirm max of orig sig fiducial, ignore for now
         
-        # Diastole Location
-        # When the diastolic peak is not present (such as in older subjects), the corresponding location of this point can be estimated as the first local maxima in the second derivative after the e- wave
-
-        # String shortening for df col names 
+        # String shortening for dict key names 
         if crossing_type == "pos2neg":
             type_str = "p2n"
         elif crossing_type == "neg2pos":
             type_str = "n2p"
         elif crossing_type == "both":
             type_str = ""
+        else:
+            ValueError(f"Invalid crossing_type: {crossing_type}")
          
         # Create feature dict with sum of zero-crossings:
         feature_dict = {
@@ -139,6 +138,10 @@ class PulseWaveFeatures:
         # e wave
 
         # dicrotic notch
+
+        # Diastole Location
+        # When the diastolic peak is not present (such as in older subjects), the corresponding location of this point can be estimated as the first local maxima in the second derivative after the e- wave
+
 
         pass
 
