@@ -105,14 +105,28 @@ class PulseWaveFeatures:
         
         # Diastole Location
         # When the diastolic peak is not present (such as in older subjects), the corresponding location of this point can be estimated as the first local maxima in the second derivative after the e- wave
- 
-        # Collect features into dict
+
+        # String shortening for df col names 
+        if crossing_type == "pos2neg":
+            type_str = "p2n"
+        elif crossing_type == "neg2pos":
+            type_str = "n2p"
+        elif crossing_type == "both":
+            type_str = ""
+         
+        # Create feature dict with sum of zero-crossings:
         feature_dict = {
-            "1deriv_num_zero_crossing_pos2neg": len(zero_crossing_times), 
-            #TODO: Make this adaptive to the list size
-            "1deriv_zero_crossing_1_idx": zero_crossing_idxs[0]
+            f"1deriv_0cross_sum_{type_str}": len(zero_crossing_times), 
             }
         
+        # Create dynamic dict key str based on num of zero_crossings
+        names = []
+        for idx, val in enumerate(zero_crossing_times):
+            names.append(f"1deriv_0cross_{type_str}_{idx}")
+
+        # Update feature dict with keys and values for zerocrossing.
+        feature_dict.update(zip(names, zero_crossing_times))
+
         return feature_dict
 
 

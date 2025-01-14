@@ -26,7 +26,7 @@ class Plots:
         plt.scatter(x=series2.timestamp_ms,y=series2.ppg, label="series2", s=5)
         plt.xlabel("Idx")
         plt.ylabel("PPG (A.U.)")
-        plt.legend()
+        #plt.legend()
         plt.show()
  
 
@@ -107,16 +107,16 @@ class Plots:
         plt.plot(df[value_col], label=value_col, alpha=0.8)
     
         troughs = df.loc[df['is_beat_trough'] == True]
-        plt.scatter(troughs.index, troughs[value_col], color='blue', label='Troughs', s=15)
+        plt.scatter(troughs.index, troughs[value_col], color='blue', label='Troughs', s=25)
 
         peaks = df.loc[df['is_beat_peak'] == True]
-        plt.scatter(peaks.index, peaks[value_col], color='red', label='Peaks', s=15)
+        plt.scatter(peaks.index, peaks[value_col], color='red', label='Peaks', s=25)
 
         plt.title("Combined Sections with Detected Troughs and Peaks")
         plt.xlabel("Index")
         plt.ylabel("Filtered PPG")
-        plt.legend()
-        plt.grid(alpha=0.3)
+        #plt.legend()
+        #plt.grid(alpha=0.3)
         plt.show()
     
     def single_beat(df, beat_idx):
