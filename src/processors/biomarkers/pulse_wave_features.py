@@ -217,13 +217,33 @@ class PulseWaveFeatures:
                                                   sig_name="sig_3deriv",
                                                   crossing_type="both")
         features_dict.update({"zero_crossings": zero_cross})
+        #TODO modify compute_zero_cross to label p2n and n2p in both method.
 
-        # p1 can be identified by searching for the first local maximum of the third derivative after the occurrence of the b-wave in the SDPPG,
-               
- 
-        # a candidate p2 can be identified as the last local minimum of the third derivative before the d-wave, or as the local maximum of the original PPG between this candidate and the appearance of the dicrotic notch
+
+        # Early Systolic Component P0
         
+        # Middle Systolic Component P1
+        # p1 can be identified by searching for the first local maximum of the third derivative after the occurrence of the b-wave in the SDPPG,
+        # The first local maximum of x′′′ after b. (10.1088/1361-6579/aabe6a)
+ 
+        # Middle Systolic Component P2
+        # a candidate p2 can be identified as the last local minimum of the third derivative before the d-wave, or as the local maximum of the original PPG between this candidate and the appearance of the dicrotic notch
+        # Identify a candidate p2 at the last local minimum of x′′′ before d (unless c = d, in which case take the first local minimum of x′′′ after d). If there is a local maximum of x between this candidate and dic then use this instead. (10.1088/1361-6579/aabe6a)
+        
+        
+        # End systolic component P3
+
+        # Early Diastolic Component P4
+
         return features_dict 
+
+    #4th deriv: https://pmc.ncbi.nlm.nih.gov/articles/PMC9280335/pdf/fpubh-10-920946.pdf
+        # Early Systolic Component q1
+
+        # Middle Systolic Components q2, q3
+        
+        # End Diastic component q4
+
  
     def compute_features_misc(self, beat: pd.DataFrame) -> dict:
         """
@@ -264,19 +284,6 @@ class PulseWaveFeatures:
         else:
             ValueError(f"Invalid crossing_type: {crossing_type}")
          
-        # Create feature dict with sum of zero-crossings:
-        #feature_dict = {
-        #    f"1deriv_0cross_sum_{type_str}": len(zero_crossing_times), 
-        #    }
-        
-        # Create dynamic dict key str based on num of zero_crossings
-        #names = []
-        #for idx, val in enumerate(zero_crossing_times):
-        #    names.append(f"1deriv_0cross_{type_str}_{idx}")
-
-        # Update feature dict with keys and values for zerocrossing.
-        #feature_dict.update(zip(names, zero_crossing_times))
-
         # Create nested features dict
         zero_crossings_dict = {
             "sum": len(zero_crossing_times),
