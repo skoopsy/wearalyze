@@ -140,7 +140,8 @@ def main():
     # Compute Pulse Wave Features (pwf)
     pwf = PulseWaveFeatures(data) 
     data, beat_features = pwf.compute()
-
+    for i in range( 2600, 2700, 1):
+        Plots.plot_beat_with_features_deriv(data, beat_features, i)
     breakpoint()
 
 if __name__ == "__main__":

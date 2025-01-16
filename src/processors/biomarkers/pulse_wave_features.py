@@ -2,6 +2,9 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+from .derivatives_calculator import DerivativesCalculator
+
+#TODO: Refactor into more classes PulseWaveFeatureOrchestrator,FeatureExtractor, ZeroCrossingAnalyser, 
 class PulseWaveFeatures:
 
     def __init__(self, data):
@@ -20,10 +23,14 @@ class PulseWaveFeatures:
     
         # Compute in place on input df
         # signal derivatives
-        self.first_derivative()
-        self.second_derivative()
-        self.third_derivative()
-
+        #self.first_derivative()
+        #self.second_derivative()
+        #self.third_derivative()
+        calculator = DerivativesCalculator(self.data, "timestamp_ms", "filtered_value", "global_beat_index")
+        calculator.compute_first_derivative()
+        calculator.compute_second_derivative()
+        calculator.compute_third_derivative()
+        
         # Build beat-level features df
         beats_features = self.create_beats_features()
 
@@ -337,4 +344,4 @@ class PulseWaveFeatures:
                             )
 
         return zero_crossings
-
+  
