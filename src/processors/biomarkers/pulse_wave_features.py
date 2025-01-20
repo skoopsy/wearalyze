@@ -21,17 +21,20 @@ class PulseWaveFeatures:
         
         # Sort data, probably unnessicary
         self.data = self.data.sort_values(by=['global_beat_index','timestamp_ms'])    
-    
+         
         # Compute in place on input df
         # signal derivatives
         #self.first_derivative()
         #self.second_derivative()
         #self.third_derivative()
         smooth = SignalSmoothing(self.data,
-                                 "filtered_value",
-                                 "global_beat_index"
+                                 signal_col="filtered_value",
+                                 group_col="global_beat_index",
+                                 output_col="sig_smooth"
         )
-        self.data["sig_smooth"] = smooth.rolling_avg()
+        smooth.group_apply(method="savitzky_golay",
+                                   window_size=31,
+                                   poly_order=2)
 
         calculator = DerivativesCalculator(self.data,
                                           "timestamp_ms", 
