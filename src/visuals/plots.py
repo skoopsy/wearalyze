@@ -250,7 +250,7 @@ class Plots:
                            color='blue', label='Diastole', zorder=5)
         axs[0].legend()
 
-        # Plot rolling avg original signal
+        # Plot smoothed signal
         axs[1].plot(beat_data['timestamp_ms'], beat_data["sig_smooth"], label="PPG Rolling avg 5", linewidth=1.5)
         axs[1].set_title("PPG Smoothed")
         

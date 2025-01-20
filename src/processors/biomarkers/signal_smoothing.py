@@ -36,15 +36,48 @@ class SignalSmoothing:
             raise ValueError("Window size is greater than series length")
         return pd.Series(savgol_filter(series, window_size, poly_order), index=series.index)
 
-    def _fda_bspline(self, series: pd.Series, n_basis: int = 10):
+    def _fda_bspline(self, series: pd.Series, n_basis: int = 10, order: int = 3) -> pd.Series:
         """
-        Fit a B-spline to data using scikit-fda
+        Fit a B-spline basis to the input Pandas Series using scikit-fda
+        and return the smoothed values. The index of the series is taken
+        as the 'x' domain. This allows for subsequent numerical 
+        differentiation on a smooth functional representation.
         """
-        pass
+        import numpy as np
+        import skfda
+        from skfda.representation.basis import BSplineBasis
+        from skfda.preprocessing.smoothing import BasisSmoother
+        
+        # Convert index and values to numpy arrays
+        x = np.array(series.index, dtype=float)
+        y = np.array(series, dtype=float)
+        
+        # Handle cases where the series might be too short
+        if len(series) < n_basis:
+            raise ValueError("Number of basis functions exceeds series length. "
+                             "Try reducing 'n_basis' or using a longer series.")
+        
+        # Define the domain range for the B-spline
+        domain_range = (x.min(), x.max())
+        
+        # Define the B-spline basis
+        basis = BSplineBasis(n_basis=n_basis, domain_range=domain_range)
+        
+        # Create functional data from the raw y-values
+        fd = skfda.FDataGrid(data_matrix=y.reshape(1, -1), grid_points=x)
+        
+        # Create a smoother using the basis
+        smoother = BasisSmoother(basis=basis)
+        
+        # Fit and transform the data to get functional representation
+        fd_smooth = smoother.fit_transform(fd)
+        
+        # Evaluate (sample) the smoothed function at the original x points
+        y_smooth = fd_smooth.evaluate(x).ravel()
+        
+        # Return as a Pandas Series with the same index as the original
+        return pd.Series(y_smooth, index=series.index)
 
-
-
-  
     def group_apply(self, method: str, **kwargs):
         """
         Apply a specified smoothing method by group and update the original DataFrame with the smoothed values.
@@ -61,7 +94,7 @@ class SignalSmoothing:
                 result = method_func(group[self.signal_col], **kwargs)
                 return result
             except ValueError as e:
-                flagged_groups.append(group[self.group_col].iloc[0])
+                flagged_groups.append((group[self.group_col].iloc[0], str(e)))
                 return pd.Series([pd.NA] * len(group), index=group.index)
 
         # Apply smoothing method and store results in a new column
@@ -69,35 +102,8 @@ class SignalSmoothing:
             lambda group: apply_method(group)
         ).reset_index(level=0, drop=True)
 
-        self.data[self.output_col] = smoothed_results
+        self.data[f"sig_smooth"] = smoothed_results
 
         if flagged_groups:
-            print(f"Warning: The following groups could not be processed due to errors: {flagged_groups}")
-    
-    
-    def savitzky_golay(self):
-        """
-        Use savgol smoothing on signal
-        """
-        window_size = 21
-        poly_order = 3
-        y_smooth = savgol_filter(y, window_size, poly_order)
- 
-        return y_smooth
-
-    def fda_bspline(self):
-        """
-        use scikit-fda package to fit a b-spline to the waveforms for numerical differentiation
-        doi:10.1007/b98888.
-        https://fda.readthedocs.io/en/stable/index.html 
-        """
-        
-        pass
-  
-    def rolling_avg(self):
-        """
-        """
-        return self.data.groupby(self.group_col).apply(
-            lambda group: group[self.signal_col].rolling(window=6, center=True).mean()
-        ).reset_index(level=0, drop=True)
- 
+            for group, error in flagged_groups:
+                print(f"Warning: Group '{group}' could not be processed due to error: {error}")

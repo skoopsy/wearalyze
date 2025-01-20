@@ -32,10 +32,22 @@ class PulseWaveFeatures:
                                  group_col="global_beat_index",
                                  output_col="sig_smooth"
         )
+        
         smooth.group_apply(method="savitzky_golay",
                                    window_size=31,
                                    poly_order=2)
-
+        
+        smooth = SignalSmoothing(self.data,
+                                 signal_col="sig_smooth",
+                                 group_col="global_beat_index",
+                                 output_col="sig_smooth"
+        )
+        
+        smooth.group_apply(method="fda_bspline",
+                           n_basis=13,
+                           order=3
+        )
+                            
         calculator = DerivativesCalculator(self.data,
                                           "timestamp_ms", 
                                           "sig_smooth", 
