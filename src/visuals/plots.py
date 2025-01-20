@@ -232,7 +232,7 @@ class Plots:
         e_wave_idx = extract_feature(features, 'e_wave', 'idx')
 
         # Plot the beat signal and derivatives
-        fig, axs = plt.subplots(5, 1, figsize=(12, 16), sharex=True)
+        fig, axs = plt.subplots(5, 1, figsize=(9, 14), sharex=True)
 
         # Plot original signal
         axs[0].plot(beat_data['timestamp_ms'], beat_data['ppg'], label='PPG Signal', linewidth=1.5)
@@ -251,8 +251,8 @@ class Plots:
         axs[0].legend()
 
         # Plot rolling avg original signal
-        axs[1].plot(beat_data['timestamp_ms'], beat_data["sig_avg5"], label="PPG Rolling avg 5", linewidth=1.5)
-        axs[1].set_title("PPG Rolling AVG")
+        axs[1].plot(beat_data['timestamp_ms'], beat_data["sig_smooth"], label="PPG Rolling avg 5", linewidth=1.5)
+        axs[1].set_title("PPG Smoothed")
         
         # Plot first derivative
         axs[2].plot(beat_data['timestamp_ms'], beat_data['sig_1deriv'], label='1st Derivative', linewidth=1.5)

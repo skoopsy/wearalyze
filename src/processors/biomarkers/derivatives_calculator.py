@@ -51,17 +51,21 @@ class DerivativesCalculator:
         """
         Computes 1st derivative of a signal and stores it in a DataFrame.
         """
-        self.data["sig_avg5"] = self.compute_rolling_avg(self.signal_col)
-        self.data["sig_1deriv0"] = self.compute_derivative("sig_avg5")
-        self.data["sig_1deriv"] = self.compute_rolling_avg("sig_1deriv0")
+        #self.data["sig_avg5"] = self.compute_rolling_avg(self.signal_col)
+        self.data["sig_1deriv"] = self.compute_derivative("sig_smooth")
+        #self.data["sig_1deriv"] = self.compute_rolling_avg("sig_1deriv0")
+
+
     def compute_second_derivative(self):
         """
         Compute 2nd derivative of a signal and store in DataFrame
         """
         if "sig_1deriv" not in self.data:
             self.compute_first_derivative()
-        self.data["sig_2deriv0"] = self.compute_derivative("sig_1deriv")
-        self.data["sig_2deriv"] = self.compute_rolling_avg("sig_2deriv0")
+        self.data["sig_2deriv"] = self.compute_derivative("sig_1deriv")
+        #self.data["sig_2deriv"] = self.compute_rolling_avg("sig_2deriv0")
+
+
     def compute_third_derivative(self):
         """
         Compute 3rd derivative of a signal and store in DataFrame
