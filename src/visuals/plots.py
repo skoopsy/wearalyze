@@ -243,8 +243,11 @@ class Plots:
         y_systole_idx = extract_feature(features,'y', 'systole')['idx']
         y_systole_time = extract_feature(features,'y', 'systole')['time']
         y_diastole_idx = None
+
+        dydx_ms_idx = extract_feature(features, 'dydx', 'ms')
         dydx_systole_idx = extract_feature(features,'dydx', 'systole')['idx']
         dydx_diastole_idx = extract_feature(features,'dydx', 'diastole')['idx']
+
         a_wave_idx = extract_feature(features, 'd2ydx2', 'a_wave')['idx']
         b_wave_idx = extract_feature(features, 'd2ydx2', 'b_wave')['idx']
         c_wave_idx = extract_feature(features, 'd2ydx2', 'c_wave')['idx']
@@ -291,17 +294,24 @@ class Plots:
         axs[2].set_title("1st Derivative")
         axs[2].set_ylabel("Amplitude")
         axs[2].grid(True)
-
+        
         # Annotate fiducials for first derivative
+        if dydx_ms_idx is not None and dydx_ms_idx < len(beat_data):
+            axs[2].scatter(beat_data.iloc[dydx_ms_idx]['timestamp_ms'],
+                           beat_data.iloc[dydx_ms_idx]['sig_1deriv'],
+                           color="orange", label='ms (dydx)', zorder=5)
+        else:
+            print(f"ms value invalid: {dydx_ms_idx}")
+
         if dydx_systole_idx is not None and dydx_systole_idx < len(beat_data):
             axs[2].scatter(beat_data.iloc[dydx_systole_idx]['timestamp_ms'], 
                            beat_data.iloc[dydx_systole_idx]['sig_1deriv'], 
                            color='red', label='Systole (dydx)', zorder=5)
+        
         if dydx_diastole_idx is not None and dydx_diastole_idx < len(beat_data):
             axs[2].scatter(beat_data.iloc[dydx_diastole_idx]['timestamp_ms'], 
                            beat_data.iloc[dydx_diastole_idx]['sig_1deriv'], 
                            color='blue', label='Diastole (dydx)', zorder=5)
- 
  
         # Plot second derivative
         axs[3].plot(beat_data['timestamp_ms'], beat_data['sig_2deriv'], label='2nd Derivative', linewidth=1.5)
@@ -325,6 +335,6 @@ class Plots:
 
         for ax in axs:
             ax.legend()
-
+        fig.suptitle(f"Beat: {global_beat_index}")
         plt.tight_layout()
         plt.show()

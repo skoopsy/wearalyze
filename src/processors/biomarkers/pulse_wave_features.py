@@ -134,7 +134,18 @@ class PulseWaveFeatures:
     def compute_features_1deriv(self, beat: pd.DataFrame) -> dict:
         
         features_dict = {}
-        
+
+        # Max upslope of systole = ms
+        if len(beat) < 2:
+            ms_idx = None
+        else:
+            try: 
+                ms_idx = beat['sig_1deriv'].idxmax()
+                ms_idx_local = np.nanargmax(beat['sig_1deriv'])
+                features_dict.update({"ms": ms_idx_local})
+            except ValueError:
+                breakpoint()
+
         # Get zero crossings
         zero_cross = self._compute_zero_crossings_dict(beat, 
                                                   sig_name="sig_1deriv",
@@ -142,12 +153,28 @@ class PulseWaveFeatures:
                      )
         features_dict.update({"zero_crossings": zero_cross})
 
-        # Systolic Peak
-        if zero_cross["sum"] > 0:
-            systole = { "detected": True,
-                        "time": zero_cross["times"]['0'],
-                        "idx": zero_cross["idxs"]['0'] 
-            }
+        # Systolic Peak first p2n zero crossing after ms
+        if zero_cross["sum"] > 0 and ms_idx is not None:
+
+            val_or_key = "key"
+            if val_or_key == "val":
+                first_zerocross_after_ms = next(
+                    (value for value in zero_cross['idxs'].values() 
+                    if value > ms_idx_local),None
+                    )
+            elif val_or_key == "key":
+                first_zerocross_after_ms = next(
+                    (key for key, value in zero_cross['idxs'].items()
+                     if value > ms_idx_local),None
+                )
+
+            if first_zerocross_after_ms is not None:
+                systole = { "detected": True,
+                            "time": zero_cross["times"][first_zerocross_after_ms],
+                            "idx": zero_cross["idxs"][first_zerocross_after_ms] 
+                }
+            else:
+                systole = {"detected": False}
         else: 
             systole = {"detected": False}
         features_dict.update({"systole": systole})
@@ -158,13 +185,32 @@ class PulseWaveFeatures:
             features_dict.update({"systole_crest_time_ms": systole_crest_time_ms})
             
         # Diastolic peak
-        if zero_cross["sum"] > 1:
-            diastole = { "detected": True,
-                         "time": zero_cross["times"]['1'],
-                         "idx": zero_cross["idxs"]['1']
-            }
+        if zero_cross["sum"] > 1 and first_zerocross_after_ms is not None:
+
+            # Generator to find matches excl first one
+            zero_cross_after_ms = (
+                key for key, value in zero_cross['idxs'].items()
+                if value > ms_idx_local and key != first_zerocross_after_ms
+            )
+
+            # Get 2nd match
+            second_zerocross_after_ms = next(zero_cross_after_ms, None)
+            
+            if second_zerocross_after_ms is not None:               
+                diastole = { "detected": True,
+                             "time": zero_cross["times"][second_zerocross_after_ms],
+                             "idx": zero_cross["idxs"][second_zerocross_after_ms]
+                }
+            else:
+                diastole = {"detected": False}
+
         else:
             diastole = {"detected": False}
+        
+        """ 
+        if beat.global_beat_index.iloc[0] > 2599  and second_zerocross_after_ms is not None and first_zerocross_after_ms == second_zerocross_after_ms:
+            breakpoint()
+        """
         features_dict.update({"diastole": diastole})
 
         # deltaT Systole-Diastole  (time diff)
