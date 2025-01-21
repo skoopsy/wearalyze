@@ -138,24 +138,88 @@ class PulseWaveFeatures:
         # Max upslope of systole = ms
         if len(beat) < 2:
             ms_idx = None
+            ms_idx_local = None
         else:
             try: 
                 ms_idx = beat['sig_1deriv'].idxmax()
-                ms_idx_local = np.nanargmax(beat['sig_1deriv'])
+                ms_idx_local = np.nanargmax(beat['sig_1deriv']) # .values)
                 features_dict.update({"ms": ms_idx_local})
             except ValueError:
                 breakpoint()
 
         # Get zero crossings
         zero_cross = self._compute_zero_crossings_dict(beat, 
-                                                  sig_name="sig_1deriv",
-                                                  crossing_type="pos2neg"
-                     )
+                                                       sig_name="sig_1deriv",
+                                                       crossing_type="pos2neg"
+        )
         features_dict.update({"zero_crossings": zero_cross})
 
         # Systolic Peak first p2n zero crossing after ms
-        if zero_cross["sum"] > 0 and ms_idx is not None:
+        if zero_cross['sum'] > 0 and ms_idx_local is not None:
+            # Pick from zross_cross if condition met 
+            zc_after_ms = [zc_idx for zc_idx in zero_cross['idxs'] if zc_idx > ms_idx_local]
+            
+            if len(zc_after_ms) > 0:
+                # 1st crossing after ms
+                first_zc_idx_local = zc_after_ms[0]
+                
+                # Compute position from original zero_cross list for timestamp
+                original_pos = zero_cross['idxs'].index(first_zc_idx_local)
+                cross_time = zero_cross['times'][original_pos]
 
+                systole = {
+                    'detected': True,
+                    'time': cross_time,
+                    'idx': first_zc_idx_local
+                }
+
+                # Systolic crest time
+                systole_crest_time_ms = systole['time'] = beat['timestamp_ms'].iloc[0]
+                features_dict.update({
+                    'systole': systole,
+                    'systole_crest_time_ms': systole_crest_time_ms
+                })
+            else:
+                # No zerocrossing after ms
+                features_dict.update({'systole': {'detected': False}})
+        else:
+            features_dict.update({'systole': {'detected': False}})
+
+        # Diastolic Peak: 2nd crosing after ms
+        if zero_cross['sum'] > 1 and ms_idx_local is not None:
+            # zc_after_ms should have been defined earlier, but just incase:
+            zc_after_ms = [zc_idx for zc_idx in zero_cross['idxs'] if zc_idx > ms_idx_local]
+            if len(zc_after_ms) >=2:
+                second_zc_idx_local = zc_after_ms[1]
+                original_pos_2 = zero_cross['idxs'].index(second_zc_idx_local)
+                diastole_time = zero_cross['times'][original_pos_2]
+            
+                diastole = {
+                    'detected': True,
+                    'time': diastole_time,
+                    'idx': second_zc_idx_local
+                }
+                features_dict.update({'diastole': diastole})
+                
+                # Systole-Diastole Delta Time
+                if features_dict.get('systole', {}).get('detected', True): #TODO Check True or False?
+                    deltaT = diastole_time - features_dict['systole']['time']
+                    features_dict.update({'sys-dia-deltaT_ms': deltaT})
+            else:
+                features_dict.update({'diastole': {'detected': False}})
+        else:
+            features_dict.update({'diastole': {'detected': False}})
+
+        return {'dydx': features_dict}
+    
+            
+
+
+
+
+
+
+        """
             val_or_key = "key"
             if val_or_key == "val":
                 first_zerocross_after_ms = next(
@@ -223,7 +287,7 @@ class PulseWaveFeatures:
             "dydx": features_dict
         }
         return features_dict_categorised
-
+        """
 
     def compute_features_2deriv(self, beat: pd.DataFrame) -> dict:
          
@@ -235,35 +299,37 @@ class PulseWaveFeatures:
                                                   crossing_type="both")
         features_dict.update({"zero_crossings": zero_cross})
  
-        if zero_cross["sum"] > 4 :
+        if zero_cross["sum"] > 4 : #TODO: This if is not needed as these points are not to do with zerocross
             
             features_dict.update({"abcde_detected": True})            
             
-            breakpoint()
             # a wave - max d2ydx2 prior to ms from dydx
-            a_wave = {"time": zero_cross["times"]['0'],
-                      "idx": zero_cross["idxs"]['0']}
+            a_wave = {"time": zero_cross["times"][0],
+                      "idx": zero_cross["idxs"][0]}
+
             features_dict.update({"a_wave":a_wave})
 
-            # b wave
-            b_wave = {"time": zero_cross["times"]['1'],
-                      "idx": zero_cross["idxs"]['1']}
+            # b wave - first local minima after a
+            b_wave = {"time": zero_cross["times"][1],
+                      "idx": zero_cross["idxs"][1]}
             features_dict.update({"b_wave":b_wave})
 
-            # c wave
-            c_wave = {"time": zero_cross["times"]['2'],
-                      "idx": zero_cross["idxs"]['2']}
+            # c wave - greatest max between b and e, if no max then 1st of the 1st max on dydx after e or first min on d3ydx3 after e
+            c_wave = {"time": zero_cross["times"][2],
+                      "idx": zero_cross["idxs"][2]}
             features_dict.update({"c_wave":c_wave})
 
-            # d wave
-            d_wave = {"time": zero_cross["times"]['3'],
-                      "idx": zero_cross["idxs"]['3']}
+            # d wave - lowest min on d2ydx2 after c and before e (if no minima then coincident with c)
+            d_wave = {"time": zero_cross["times"][3],
+                      "idx": zero_cross["idxs"][3]}
             features_dict.update({"d_wave":d_wave})
 
-            # e wave
-            e_wave = {"time": zero_cross["times"]['4'],
-                      "idx": zero_cross["idxs"]['4']}
+            # e wave - 2nd maxima of d2ydx2 after ms and before 0.6T, unless c is inflection point, in which case take first maximum
+            e_wave = {"time": zero_cross["times"][4],
+                      "idx": zero_cross["idxs"][4]}
             features_dict.update({"e_wave":e_wave})
+
+            # f wave - 1st local minium of d2ydx2 after e and before 0.8T
 
         else:
             
@@ -281,8 +347,8 @@ class PulseWaveFeatures:
         # Diastole Location Estimate - When the diastolic peak is not present (such as in older subjects), the corresponding location of this point can be estimated as the first local maxima in the second derivative after the e- wave
         if zero_cross["sum"] > 5:
             diastole_estimate = {"detected": True,
-                                 "time": zero_cross["times"]['5'],
-                                 "idx":zero_cross["idxs"]['5']}
+                                 "time": zero_cross["times"][5],
+                                 "idx":zero_cross["idxs"][5]}
         else: 
             diastole_estimate = {"detected": False}
 
@@ -349,25 +415,22 @@ class PulseWaveFeatures:
         
     def _compute_zero_crossings_dict(self, beat: pd.DataFrame, sig_name: str, crossing_type: str) -> dict:
         """
-        Uses find_zero_crossings to collect zero corssing points and add to a
+        Uses _find_zero_crossings to collect zero corssing points and add to a
         nested dict
 
         Args:
             sig_name (str): df key for the signal column being analysed
             crossing_type (str): pos2neg, neg2pos, both
         Returns:
-            feature_dict (dict): Nested dict of zero crossing points
+            feature_dict (dict): Nested dict of lists zero crossing points
         """
         # Zero-crossings
         zero_crossing_idxs = self._find_zero_crossings(beat[sig_name].values,
                                                    crossing_type=crossing_type
-                                                  )
+        )
         zero_crossing_times = beat["timestamp_ms"].iloc[zero_crossing_idxs].values
 
 
-        # Systole Location
-        # Can just use this to confirm max of orig sig fiducial, ignore for now
-        
         # String shortening for dict key names 
         if crossing_type == "pos2neg":
             type_str = "p2n"
@@ -378,14 +441,12 @@ class PulseWaveFeatures:
         else:
             ValueError(f"Invalid crossing_type: {crossing_type}")
          
-        # Create nested features dict
+        # Create dict with lists
         zero_crossings_dict = {
-            "sum": len(zero_crossing_times),
+            "sum": len(zero_crossing_idxs),
             "type": type_str,
-            "times": {f"{idx}": val 
-                       for idx, val in enumerate(zero_crossing_times)},
-             "idxs": {f"{idx}": val 
-                       for idx, val in enumerate(zero_crossing_idxs)}
+            "times": list(zero_crossing_times),
+            "idxs": list(zero_crossing_idxs)
         }
 
         return zero_crossings_dict
