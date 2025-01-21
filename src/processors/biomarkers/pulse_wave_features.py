@@ -416,30 +416,4 @@ class PulseWaveFeatures:
                             )
 
         return zero_crossings
-
-    def _filter_savitzky_golay(y: pd.Series ):
-        """
-        Use savgol smoothing on signal
-        """
-        from scipy.signal import savgol_filter
-        window_size = 21
-        poly_order = 3
-        y_smooth = savgol_filter(y, window_size, poly_order)
- 
-        return y_smooth
-
-    def _filter_fda_bspline():
-        """
-        use scikit-fda package to fit a b-spline to the waveforms for numerical differentiation
-        doi:10.1007/b98888.
-        https://fda.readthedocs.io/en/stable/index.html 
-        """
-        
-        pass
-
-      
-    def compute_rolling_avg(self, column):
-        return self.data.groupby(self.group_col).apply(
-            lambda group: group[column].rolling(window=6, center=True).mean()
-        ).reset_index(level=0, drop=True)
-    
+   
