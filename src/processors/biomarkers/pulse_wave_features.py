@@ -207,10 +207,10 @@ class PulseWaveFeatures:
         else:
             diastole = {"detected": False}
         
-        """ 
-        if beat.global_beat_index.iloc[0] > 2599  and second_zerocross_after_ms is not None and first_zerocross_after_ms == second_zerocross_after_ms:
-            breakpoint()
-        """
+         
+        #if beat.global_beat_index.iloc[0] > 2599  and second_zerocross_after_ms is not None and first_zerocross_after_ms == second_zerocross_after_ms:
+        #    breakpoint()
+        
         features_dict.update({"diastole": diastole})
 
         # deltaT Systole-Diastole  (time diff)
@@ -238,8 +238,9 @@ class PulseWaveFeatures:
         if zero_cross["sum"] > 4 :
             
             features_dict.update({"abcde_detected": True})            
-           
-            # a wave
+            
+            breakpoint()
+            # a wave - max d2ydx2 prior to ms from dydx
             a_wave = {"time": zero_cross["times"]['0'],
                       "idx": zero_cross["idxs"]['0']}
             features_dict.update({"a_wave":a_wave})
