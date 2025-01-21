@@ -16,9 +16,9 @@
         "checkpoint_save": true
     },
     "filter": {
-        "sample_rate": 32,
+        "sample_rate": 100,
         "lowcut": 0.15,
-        "highcut": 15,
+        "highcut": 10,
         "order": 4
     },
     "ppg_preprocessing": {

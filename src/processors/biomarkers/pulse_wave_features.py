@@ -22,32 +22,19 @@ class PulseWaveFeatures:
         # Sort data, probably unnessicary
         self.data = self.data.sort_values(by=['global_beat_index','timestamp_ms'])    
          
-        # Compute in place on input df
-        # signal derivatives
-        #self.first_derivative()
-        #self.second_derivative()
-        #self.third_derivative()
+        # Signal Smoothing        
         smooth = SignalSmoothing(self.data,
                                  signal_col="filtered_value",
                                  group_col="global_beat_index",
                                  output_col="sig_smooth"
         )
-        
-        smooth.group_apply(method="savitzky_golay",
-                                   window_size=31,
-                                   poly_order=2)
-        
-        smooth = SignalSmoothing(self.data,
-                                 signal_col="sig_smooth",
-                                 group_col="global_beat_index",
-                                 output_col="sig_smooth"
-        )
-        
+          
         smooth.group_apply(method="fda_bspline",
-                           n_basis=13,
-                           order=3
+                           n_basis=21,
+                           order=4
         )
-                            
+        
+        # Compute derivatives   
         calculator = DerivativesCalculator(self.data,
                                           "timestamp_ms", 
                                           "sig_smooth", 
@@ -115,19 +102,30 @@ class PulseWaveFeatures:
     def compute_features_y(self, beat: pd.DataFrame) -> dict:
         
         # Systole
+        # Reports relative idx of the beat
+        systole_idx_local = beat['filtered_value'].values.argmax()
+        # Reports df idx 
         systole_idx = beat['filtered_value'].idxmax()
-        #plt.plot(beat['filtered_value'])
-        #plt.scatter(systole_idx, beat['filtered_value'].loc[systole_idx])
-        #plt.show()
+        
+        debug_plot = False
+        if debug_plot == True:
+            plt.plot(beat['filtered_value'])
+            plt.scatter(systole_idx, beat['filtered_value'].loc[systole_idx])
+            plt.show()
+
         systole_time = beat['timestamp_ms'].loc[systole_idx]
         
         # Beat duration
         beat_duration = beat['timestamp_ms'].iloc[-1] - beat['timestamp_ms'].iloc[0]
         
         feature_dict = {
-            "systole_idx": systole_idx,
-            "systole_time": systole_time,
-            "beat_duration": beat_duration 
+            "y":{
+                "systole": {
+                    "idx": systole_idx_local,
+                    "time": systole_time
+                },
+                "beat_duration": beat_duration 
+            }
         }
         
         return feature_dict
@@ -173,8 +171,12 @@ class PulseWaveFeatures:
         if diastole["detected"] and systole["detected"]:
             deltaT = diastole["time"] - systole["time"]
             features_dict.update({"systole-diastole_deltaT_ms": deltaT}) 
-    
-        return features_dict
+       
+        # Assign to a value for combination into larger dict 
+        features_dict_categorised = {
+            "dydx": features_dict
+        }
+        return features_dict_categorised
 
 
     def compute_features_2deriv(self, beat: pd.DataFrame) -> dict:
@@ -237,7 +239,13 @@ class PulseWaveFeatures:
         else: 
             diastole_estimate = {"detected": False}
 
-        return features_dict
+         
+        # Assign to a value for combination into larger dict 
+        features_dict_categorised = {
+            "d2ydx2": features_dict
+        }
+       
+        return features_dict_categorised
 
 
     def compute_features_3deriv(self, beat: pd.DataFrame) -> dict:
@@ -268,7 +276,13 @@ class PulseWaveFeatures:
 
         # Early Diastolic Component P4
 
-        return features_dict 
+         
+        # Assign to a value for combination into larger dict 
+        features_dict_categorised = {
+            "d3ydx3": features_dict
+        }
+       
+        return features_dict_categorised 
 
     #4th deriv: https://pmc.ncbi.nlm.nih.gov/articles/PMC9280335/pdf/fpubh-10-920946.pdf
         # Early Systolic Component q1

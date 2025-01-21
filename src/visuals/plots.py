@@ -215,44 +215,76 @@ class Plots:
         if features.empty:
             raise ValueError(f"No features found for global_beat_index {global_beat_index}.")
 
-        # Extract key features safely
-        def extract_feature(features, column_name, key):
-            value = features[column_name].values[0]
-            if isinstance(value, dict):
-                return value.get(key, None)
-            #raise TypeError(f"Expected a dictionary for {column_name}, but got {type(value).__name__}.")
+        # Extract key features
+        def extract_feature(features, outer_key, inner_key, default=None):
+            """
+            Safely extracts a nested feature from a DataFrame column.
 
-        systole_idx = extract_feature(features, 'systole', 'idx')
-        systole_time = extract_feature(features, 'systole', 'time')
-        diastole_idx = extract_feature(features, 'diastole', 'idx')
-        a_wave_idx = extract_feature(features, 'a_wave', 'idx')
-        b_wave_idx = extract_feature(features, 'b_wave', 'idx')
-        c_wave_idx = extract_feature(features, 'c_wave', 'idx')
-        d_wave_idx = extract_feature(features, 'd_wave', 'idx')
-        e_wave_idx = extract_feature(features, 'e_wave', 'idx')
+            Args:
+                features (pd.DataFrame): DataFrame containing the feature dictionaries.
+                outer_key (str): The key for the outer dictionary (e.g., 'y', 'dydx').
+                inner_key (str): The key within the nested dictionary to extract (e.g., 'systole').
+                default: Value to return if the key does not exist (default is None).
+
+            Returns:
+                The value corresponding to the nested key, or the default if not found.
+            """
+            if outer_key not in features.columns:
+                raise KeyError(f"Outer key '{outer_key}' not found in DataFrame columns.")
+
+            value = features[outer_key].values[0]
+            if not isinstance(value, dict):
+                raise TypeError(f"Expected a dictionary for column '{outer_key}', "
+                                f"but got {type(value).__name__}.")
+            
+            return value.get(inner_key, default)
+        
+        # unpack features 
+        y_systole_idx = extract_feature(features,'y', 'systole')['idx']
+        y_systole_time = extract_feature(features,'y', 'systole')['time']
+        y_diastole_idx = None
+        dydx_systole_idx = extract_feature(features,'dydx', 'systole')['idx']
+        dydx_diastole_idx = extract_feature(features,'dydx', 'diastole')['idx']
+        a_wave_idx = extract_feature(features, 'd2ydx2', 'a_wave')['idx']
+        b_wave_idx = extract_feature(features, 'd2ydx2', 'b_wave')['idx']
+        c_wave_idx = extract_feature(features, 'd2ydx2', 'c_wave')['idx']
+        d_wave_idx = extract_feature(features, 'd2ydx2', 'd_wave')['idx']
+        e_wave_idx = extract_feature(features, 'd2ydx2', 'e_wave')['idx']
 
         # Plot the beat signal and derivatives
-        fig, axs = plt.subplots(5, 1, figsize=(9, 14), sharex=True)
+        fig, axs = plt.subplots(5, 1, figsize=(8, 10), sharex=True)
 
         # Plot original signal
+        # Center original signal around the mean for comparison with bspline 
         axs[0].plot(beat_data['timestamp_ms'], beat_data['ppg'], label='PPG Signal', linewidth=1.5)
-        axs[0].set_title("PPG Signal")
+        axs[0].set_title("PPG Original")
         axs[0].set_ylabel("Amplitude")
         axs[0].grid(True)
-
-        if systole_idx is not None and systole_idx < len(beat_data):
-            axs[0].scatter(beat_data.iloc[systole_idx]['timestamp_ms'], 
-                           beat_data.iloc[systole_idx]['ppg'], 
-                           color='red', label='Systole', zorder=5)
-        if diastole_idx is not None and diastole_idx < len(beat_data):
-            axs[0].scatter(beat_data.iloc[diastole_idx]['timestamp_ms'], 
-                           beat_data.iloc[diastole_idx]['ppg'], 
-                           color='blue', label='Diastole', zorder=5)
         axs[0].legend()
 
-        # Plot smoothed signal
-        axs[1].plot(beat_data['timestamp_ms'], beat_data["sig_smooth"], label="PPG Rolling avg 5", linewidth=1.5)
-        axs[1].set_title("PPG Smoothed")
+        # Plot filtered signal
+        axs[1].plot(beat_data['timestamp_ms'],
+                    beat_data["filtered_value"],
+                    label="PPG - Chebyvshev filter",
+                    linewidth=1.5)
+
+        axs[1].plot(beat_data['timestamp_ms'],
+                    beat_data["sig_smooth"],
+                    label="PPG Smoothed",
+                    linewidth=1.5)
+
+        if y_systole_idx is not None and y_systole_idx < len(beat_data):
+            axs[1].scatter(beat_data.iloc[y_systole_idx]['timestamp_ms'], 
+                           beat_data.iloc[y_systole_idx]['filtered_value'], 
+                           color='red', label='Systole (y)', zorder=5)
+        else:
+            print(f"issue with y_systole_idx = {y_systole_idx}")
+        if y_diastole_idx is not None and y_diastole_idx < len(beat_data):
+            axs[1].scatter(beat_data.iloc[y_diastole_idx]['timestamp_ms'], 
+                           beat_data.iloc[y_diastole_idx]['filtered_value'], 
+                           color='blue', label='Diastole (y)', zorder=5)
+ 
+        axs[1].set_title("PPG after Chebyshev Filter and Smoothing")
         
         # Plot first derivative
         axs[2].plot(beat_data['timestamp_ms'], beat_data['sig_1deriv'], label='1st Derivative', linewidth=1.5)
@@ -261,11 +293,16 @@ class Plots:
         axs[2].grid(True)
 
         # Annotate fiducials for first derivative
-        if a_wave_idx is not None and a_wave_idx < len(beat_data):
-            axs[2].scatter(beat_data.iloc[a_wave_idx]['timestamp_ms'], 
-                           beat_data.iloc[a_wave_idx]['sig_1deriv'], 
-                           color='orange', label='A Wave', zorder=5)
-
+        if dydx_systole_idx is not None and dydx_systole_idx < len(beat_data):
+            axs[2].scatter(beat_data.iloc[dydx_systole_idx]['timestamp_ms'], 
+                           beat_data.iloc[dydx_systole_idx]['sig_1deriv'], 
+                           color='red', label='Systole (dydx)', zorder=5)
+        if dydx_diastole_idx is not None and dydx_diastole_idx < len(beat_data):
+            axs[2].scatter(beat_data.iloc[dydx_diastole_idx]['timestamp_ms'], 
+                           beat_data.iloc[dydx_diastole_idx]['sig_1deriv'], 
+                           color='blue', label='Diastole (dydx)', zorder=5)
+ 
+ 
         # Plot second derivative
         axs[3].plot(beat_data['timestamp_ms'], beat_data['sig_2deriv'], label='2nd Derivative', linewidth=1.5)
         axs[3].set_title("2nd Derivative")
@@ -273,7 +310,7 @@ class Plots:
         axs[3].grid(True)
 
         # Annotate fiducials for second derivative
-        for wave_idx, label, color in zip([b_wave_idx, c_wave_idx], ['B Wave', 'C Wave'], ['green', 'purple']):
+        for wave_idx, label, color in zip([a_wave_idx, b_wave_idx, c_wave_idx, d_wave_idx, e_wave_idx], ['a','b','c','d','e'], ['red','purple','orange','green','purple']):
             if wave_idx is not None and wave_idx < len(beat_data):
                 axs[3].scatter(beat_data.iloc[wave_idx]['timestamp_ms'], 
                                beat_data.iloc[wave_idx]['sig_2deriv'], 
@@ -285,13 +322,6 @@ class Plots:
         axs[4].set_xlabel("Time (ms)")
         axs[4].set_ylabel("Amplitude")
         axs[4].grid(True)
-
-        # Annotate fiducials for third derivative
-        for wave_idx, label, color in zip([d_wave_idx, e_wave_idx], ['D Wave', 'E Wave'], ['cyan', 'magenta']):
-            if wave_idx is not None and wave_idx < len(beat_data):
-                axs[4].scatter(beat_data.iloc[wave_idx]['timestamp_ms'], 
-                               beat_data.iloc[wave_idx]['sig_3deriv'], 
-                               color=color, label=label, zorder=5)
 
         for ax in axs:
             ax.legend()
