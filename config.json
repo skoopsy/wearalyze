@@ -1,6 +1,7 @@
 {
 	"outputs":{
-        "print_verbosity": 2
+        "print_verbosity": 2,
+        "debug_plots": false
     },
     "data_source":{
 		"device": "corsano-2872b",
@@ -8,16 +9,16 @@
 		"file_paths": ["data/corsano2872b_ppg_green.csv"]
 	},
     "checkpoints":{
-        "load_from_checkpoint": false,
+        "load_from_checkpoint": true,
         "directory": "data/checkpoints",
         "checkpoint_id": 1,
         "data_id": "corsano_ppg_g",
         "checkpoint_save": true
     },
     "filter": {
-        "sample_rate": 32,
+        "sample_rate": 100,
         "lowcut": 0.15,
-        "highcut": 15,
+        "highcut": 10,
         "order": 4
     },
     "ppg_preprocessing": {
