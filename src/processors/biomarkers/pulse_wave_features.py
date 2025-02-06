@@ -6,7 +6,20 @@ from .derivatives_calculator import DerivativesCalculator
 from .signal_smoothing import SignalSmoothing
 
 #TODO: Refactor into more classes PulseWaveFeatureOrchestrator,FeatureExtractor, ZeroCrossingAnalyser, 
+
+
 class PulseWaveFeatures:
+    """
+    Class to orchestrate computation of PPG pulse-wave features including:
+        - raw signal features (y)
+        - first-derivative features (dydx)
+        - second-derivative features (d2ydx2)
+        - third-derivative features (d3ydx3)
+
+    Attributes:
+        data (pd.DataFrame): df with 'timstamp_ms', 'global_beat_index',
+                            'filtered_value' columns
+    """
 
     def __init__(self, data):
         # Time series df input
@@ -15,8 +28,15 @@ class PulseWaveFeatures:
 
     def compute(self):
         """
-        Returns the full timeseries df with additional processing columns
-        Returns a df of beat features per beat.
+        Main pipeline to compute:
+            - Smoothed signal via functional or smoothing methods
+            - 1st, 2nd, & 3rd derivatives
+            - Beat-level features / fiducials
+
+        Returns:
+            (pd.DataFrame, pd.DataFram):
+                - self.data with additional columns
+                - df of beat-level features (row per beat, col per feature set)
         """ 
         
         # Sort data, probably unnessicary
@@ -212,7 +232,8 @@ class PulseWaveFeatures:
 
         return {'dydx': features_dict}
     
-
+    #TODO: d2ydx2 features properly
+    #TODO: workout how to get ms from dydx features
     def compute_features_2deriv(self, beat: pd.DataFrame) -> dict:
          
         features_dict = {}
@@ -228,37 +249,33 @@ class PulseWaveFeatures:
             features_dict.update({"abcde_detected": True})            
             
             # a wave - max d2ydx2 prior to ms from dydx
-            a_wave = {"time": zero_cross["times"][0],
-                      "idx": zero_cross["idxs"][0]}
-
+            a_wave = zero_cross['idxs'][0] # PLaceholder
             features_dict.update({"a_wave":a_wave})
 
             # b wave - first local minima after a
-            b_wave = {"time": zero_cross["times"][1],
-                      "idx": zero_cross["idxs"][1]}
+            b_wave = 1 # PLaceholder
             features_dict.update({"b_wave":b_wave})
 
             # c wave - greatest max between b and e, if no max then 1st of the 1st max on dydx after e or first min on d3ydx3 after e
-            c_wave = {"time": zero_cross["times"][2],
-                      "idx": zero_cross["idxs"][2]}
+            c_wave = 1 # Placeholder
             features_dict.update({"c_wave":c_wave})
 
             # d wave - lowest min on d2ydx2 after c and before e (if no minima then coincident with c)
-            d_wave = {"time": zero_cross["times"][3],
-                      "idx": zero_cross["idxs"][3]}
+            d_wave = 1 # Placeholder
             features_dict.update({"d_wave":d_wave})
 
             # e wave - 2nd maxima of d2ydx2 after ms and before 0.6T, unless c is inflection point, in which case take first maximum
-            e_wave = {"time": zero_cross["times"][4],
-                      "idx": zero_cross["idxs"][4]}
+            e_wave = 1 # PLaceholder
             features_dict.update({"e_wave":e_wave})
 
             # f wave - 1st local minium of d2ydx2 after e and before 0.8T
+            f_wave = 1 # PLaceholder
+            features_dict.update({"f_wave":f_wave})
 
         else:
             
             features_dict.update({"abcde_detected":False})
-
+        """
         # Dicrotic notch
         if features_dict["abcde_detected"]: 
             dicrotic_notch = {"detected": True,
@@ -267,7 +284,7 @@ class PulseWaveFeatures:
           
         else: 
             dicrotic_notch = {"detected": False}
- 
+        
         # Diastole Location Estimate - When the diastolic peak is not present (such as in older subjects), the corresponding location of this point can be estimated as the first local maxima in the second derivative after the e- wave
         if zero_cross["sum"] > 5:
             diastole_estimate = {"detected": True,
@@ -276,7 +293,7 @@ class PulseWaveFeatures:
         else: 
             diastole_estimate = {"detected": False}
 
-         
+        """ 
         # Assign to a value for combination into larger dict 
         features_dict_categorised = {
             "d2ydx2": features_dict
