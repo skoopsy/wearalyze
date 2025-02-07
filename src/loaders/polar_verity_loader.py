@@ -70,6 +70,7 @@ class PolarVerityLoader(BaseLoader):
             'HR [bpm]': 'hr_bpm',
         }
 
+        # If cols exist rename them into a new mapping
         rename_dict = {col: rename_map[col] for col in df.columns 
                        if col in rename_map}
 

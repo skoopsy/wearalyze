@@ -34,17 +34,33 @@ class Corsano2872bLoader(BaseLoader):
         """
         Standardise data from Corsano 2872b
         """
+        # Column renaming
+        data = self._col_rename_map(data)
+
         # Convert timestamp to datetime
-        data['datetime'] = pd.to_datetime(data['timestamp'], unit='ms')
+        #TODO Check datetime against the date column in corsano data
+        # Better to have 2 cols - sensor_clock_ms and datetime rather than timestamp
+        data['datetime'] = pd.to_datetime(data['timestamp_ms'], unit='ms')
         
-        # rename timestamp with units
-        data['timestamp_ms'] = data['timestamp']
-   
-        # Rename the ppg channel
-        data['ppg'] = data['value']
-    
         # Make df standardised, drop non numeric columns
         data = data[['datetime','timestamp_ms', 'ppg']]
 
         return data   
 
+    def _col_rename_map(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Renanme columns to standardise column names for corsano 287-2b
+        """
+
+        # Map specifically for Corsano 287-2b from corsano portal
+        #TODO change timestamp_ms to sensor_clock_ms for all codebase
+        rename_map = {
+            'value': 'ppg',
+            'timestamp': 'timestamp_ms',    
+        }
+        
+        # If col exist rename them into new mapping
+        rename_dict = {col: rename_map[col] for col in df.columns
+                       if col in rename_map}
+
+        return df.rename(columns=rename_dict)

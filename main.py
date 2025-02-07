@@ -50,6 +50,7 @@ def main():
         # Load data
         loader = DataLoaderFactory.get_loader(device, sensor_type)
         data = loader.load_data(file_paths)
+        breakpoint()
         data = loader.standardise(data)
         breakpoint()
 
