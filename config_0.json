@@ -4,15 +4,15 @@
         "debug_plots": false
     },
     "data_source":{
-		"device": "polar-verity",
+		"device": "corsano-2872b",
 		"sensor_type": "PPG",
-		"file_paths": ["data/polar/polarveritysense_ppg.txt"]
+		"file_paths": ["data/corsano2872b_ppg_green.csv"]
 	},
     "checkpoints":{
-        "load_from_checkpoint": false,
+        "load_from_checkpoint": true,
         "directory": "data/checkpoints",
         "checkpoint_id": 1,
-        "data_id": "polar_ppg_g",
+        "data_id": "corsano_ppg_g",
         "checkpoint_save": true
     },
     "filter": {
