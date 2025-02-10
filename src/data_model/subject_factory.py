@@ -1,5 +1,5 @@
 from .subject import Subject
-from .condtions import Condition
+from .condition import Condition
 from .sensor_data import SensorData
 
 from typing import Dict, Any, List
@@ -39,7 +39,7 @@ def create_subject_from_nested_dict(subject_id: str,
     return subject
 
 # Helper function to iterate over multiple subjects
-def create_subjects_from_nested_dict(all_data: Dict[str, Dict[str, Dict[ str, pd.DataFrame]]]) -> List[Subject]: 
+def create_subjects_from_nested_dicts(all_data: Dict[str, Dict[str, Dict[ str, pd.DataFrame]]]) -> List[Subject]: 
     """
     Expected struct:
 
@@ -67,4 +67,3 @@ def create_subjects_from_nested_dict(all_data: Dict[str, Dict[str, Dict[ str, pd
     
     return subjects
 
-    """

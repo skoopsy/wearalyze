@@ -2,6 +2,8 @@ from src.loaders.config_loader import get_config
 from src.loaders.loader_orchestrator import LoaderOrchestrator
 from src.checkpoints.checkpoint_manager import CheckpointManager
 
+from src.data_model.subject_factory import create_subjects_from_nested_dicts
+
 from src.preprocessors.ppg_preprocess import PPGPreProcessor
 
 from src.processors.beat_detectors.beat_detection import HeartBeatDetector
@@ -65,6 +67,16 @@ def main():
     
     breakpoint()
 
+    subjects = create_subjects_from_nested_dicts(all_data)
+
+    for subject in subjects:
+        print(subject)
+        for condition_name, condition in subject.conditions.items():
+            print(f"    Condition: {condition_name}")
+            for sensor_type, sensor in condition.sensors.items():
+                print(f" Sensor: {sensor_type}, Data Rows: {len(sensor.data)}")
+
+    breakpoint()
 
     # Preprocess PPG data
     preprocessor = PPGPreProcessor(data, config)
