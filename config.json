@@ -4,22 +4,29 @@
         "debug_plots": false
     },
     "data_source":{
-        "subjects_dir": "data/polar/cubjects/",
-        "multi_subject": false,
+        "subjects_dir": "data/polar/subjects/",
+        "multi_subjects": false,
+        "subjects_to_load": ["all"],
         "multi_condition": {
-            "present": false,
+            "status": false,
             "conditions": ["pre_heat_exposure", "intra_heat_eposure", "post_heat_exposure"]
         },
 		"device": "polar-verity",
-		"sensor_type": "PPG",
-		"file_paths": ["data/polar/polarveritysense_ppg.txt"]
+		"sensor_type": "PPG"
 	},
-    "checkpoints":{
-        "load_from_checkpoint": false,
-        "directory": "data/checkpoints",
-        "checkpoint_id": 1,
-        "data_id": "polar_ppg_g",
-        "checkpoint_save": true
+    "checkpoint":{
+        "load": {
+            "status": false,
+            "directory": "data/checkpoints",
+            "checkpoint_id": 1,
+            "data_id": "polar_ppg_g"
+        },
+        "save": {
+            "status": true,
+            "directory": "data/checkpoints",
+            "checkpoint_id": 2,
+            "data_id": "polar_ppg_g"
+        }
     },
     "filter": {
         "sample_rate": 100,
