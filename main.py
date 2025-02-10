@@ -24,17 +24,17 @@ import pyarrow.feather as feather # Hopefully can remove in prod
 def main():
     # Parse cmd line args and load config
     config = get_config()
-    verbosity = config["outputs"]["print_verbosity"]
 
     # Extract config params
     #TODO Make this a struct and abstact unloading away
     #TODO Create from_config() functions in each class to feed config in optionally
     verbosity = config['outputs']['print_verbosity']
     debug_plots = config['outputs']['debug_plots']
-    #file_paths = config['data_source']['file_paths']
     device = config['data_source']['device']
     sensor_type = config['data_source']['sensor_type']
+    
     threshold = config['ppg_preprocessing']['threshold']
+
     beat_detector_name = config["ppg_processing"]["beat_detector"]
     sqi_group_size = config["ppg_processing"]["sqi_group_size"]
     sqi_type = config["ppg_processing"]["sqi_type"]
@@ -62,7 +62,7 @@ def main():
 
     if load_checkpoint and l_checkpoint_id == 1:
         all_data = checkpoint_mgr.load()
-        print("loading checkpoint")
+    
     breakpoint()
 
 
