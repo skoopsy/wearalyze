@@ -24,7 +24,7 @@ class CheckpointManager:
 
         with open(self.fpath, "wb") as f:
             pickle.dump(data, f)
-        print(f"Checkpoint saved: {fpath}")
+        print(f"Checkpoint saved: {self.fpath}")
 
 
     def load(self):
@@ -34,12 +34,12 @@ class CheckpointManager:
         checkpoint_id = self.load_config.get("checkpoint_id")
         self.fpath = os.path.join(directory, f"{checkpoint_id}_{data_id}.pkl")
 
-        if not os.path.exists(fpath):
-            raise FileNotFoundError(f"Checkpoint file not found: {fpath}")
+        if not os.path.exists(self.fpath):
+            raise FileNotFoundError(f"Checkpoint file not found: {self.fpath}")
         with open(self.fpath, "rb") as f:
             data = pickle.load(f)
 
-        print(f"Checkpoint loaded: {fpath}")
+        print(f"Checkpoint loaded: {self.fpath}")
         
         return data
 

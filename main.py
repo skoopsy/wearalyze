@@ -60,6 +60,9 @@ def main():
     if save_checkpoint and s_checkpoint_id == 1:
         checkpoint_mgr.save(all_data)   
 
+    if load_checkpoint and l_checkpoint_id == 1:
+        all_data = checkpoint_mgr.load()
+        print("loading checkpoint")
     breakpoint()
 
 

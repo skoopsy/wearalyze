@@ -16,16 +16,16 @@
 	},
     "checkpoint":{
         "load": {
-            "status": false,
-            "directory": "data/checkpoints",
+            "status": true,
+            "directory": "data/checkpoints/",
             "checkpoint_id": 1,
-            "data_id": "polar_ppg_g"
+            "data_id": "polar_test_1"
         },
         "save": {
-            "status": true,
-            "directory": "data/checkpoints",
-            "checkpoint_id": 2,
-            "data_id": "polar_ppg_g"
+            "status": false,
+            "directory": "data/checkpoints/",
+            "checkpoint_id": 1,
+            "data_id": "polar_test_1"
         }
     },
     "filter": {
