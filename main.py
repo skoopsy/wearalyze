@@ -1,5 +1,6 @@
 from src.loaders.config_loader import get_config
 from src.loaders.loader_factory import DataLoaderFactory
+from src.checkpoints.checkpoint_manager import CheckpointManager
 
 from src.preprocessors.ppg_preprocess import PPGPreProcessor
 
@@ -23,6 +24,7 @@ import pyarrow.feather as feather # Hopefully can remove in prod
 def main():
     # Parse cmd line args and load config
     config = get_config()
+    verbosity = config["outputs"]["print_verbosity"]
 
     # Extract config params
     #TODO Make this a struct and abstact unloading away
@@ -37,67 +39,71 @@ def main():
     sqi_group_size = config["ppg_processing"]["sqi_group_size"]
     sqi_type = config["ppg_processing"]["sqi_type"]
     sqi_composite_details = config["ppg_processing"]["sqi_composite_details"]
-    load_from_checkpoint = config["checkpoints"]["load_from_checkpoint"]
-    checkpoint_save = config["checkpoints"]["checkpoint_save"]
-    checkpoint_dir = config["checkpoints"]["directory"]
-    checkpoint_id = config["checkpoints"]["checkpoint_id"]
-    checkpoint_data_id = config["checkpoints"]["data_id"]
 
-    checkpoint_file = f"{checkpoint_dir}/{checkpoint_id}_{checkpoint_data_id}.feather"
+    load_checkpoint = config["checkpoint"]["load"]["status"]
+    l_checkpoint_id = config["checkpoint"]["load"]["checkpoint_id"]
+    save_checkpoint = config["checkpoint"]["save"]["status"]
+    s_checkpoint_id = config["checkpoint"]["save"]["checkpoint_id"]
+    checkpoint_mgr = CheckpointManager(config=config)
     
-    if not load_from_checkpoint:
-
-        # Load data
-        loader = DataLoaderFactory.get_loader(device, sensor_type)
-        data = loader.load_data(file_paths)
-        breakpoint()
-        data = loader.standardise(data)
-        breakpoint()
-
-        if verbosity >= 1: 
-            print("Finished loading data")
-
-        # Preprocess PPG data
-        preprocessor = PPGPreProcessor(data, config)
-        #TODO thresholding might not work for polar, only corsano:
-        sections = preprocessor.create_thresholded_sections() # Get sections where device was worn
-
-        if verbosity > 1:
-            for i, section in enumerate(sections):
-                print(f"Section {i+1} data points: {len(section)}") 
-
-        
-        # Apply resmapling to regularise intervals of measured data
-        # keeps sample freq the same
-        resample_freq, _, _ = preprocessor.compute_sample_freq(sections)
-        resampled_sections = preprocessor.resample(sections, resample_freq)
-
-        #Plots.ppg_series(resampled_sections[3].ppg)
-        Plots.ppg_series_compare_datetime(sections[0].reset_index(), resampled_sections[0]) 
- 
-        # Apply bandpass filter - Creates new column 'filtered_value' in df
-        preprocessor.filter_cheby2(resampled_sections)
-        
-        # Debugging prints
-        if verbosity >= 1:
-            print("Finished bandpass filtering  sections")
-        
-        # Plot entire compliance sections
-        #Plots.plot_ppg_sections_vs_time(filtered_sections)
     
-        # Detect and annotate heart beats
-        heartbeat_detector = HeartBeatDetector(config)
-        combined_sections, all_beats = heartbeat_detector.process_sections(resampled_sections)
-       
-        if verbosity >= 1:
-            print("Heart Beat Detection Complete")
-        
-        # Create checkpoint - mostly for development
-        # Save df as arrow file
-        if checkpoint_save:
-            combined_sections.reset_index(drop=True).to_feather(checkpoint_file)
-            print(f"Checkpoint created: combined_sections saved to {checkpoint_file}")
-         
+    if not load_checkpoint:
+
+        load_orchestrator = LoaderOrchestrator(config)
+        all_data = orchestrator.load_all()
+
+        if verbosity:
+            print("Data loading complete. Loaded subjects:")
+            for subject in all_data.keys():
+                print(f" {subject}")
+
+    if save_checkpoint and s_checkpoint_id == 1:
+        checkpoint_mgr.save(all_data)   
+
+    breakpoint()
+
+
+    # Preprocess PPG data
+    preprocessor = PPGPreProcessor(data, config)
+    #TODO thresholding might not work for polar, only corsano:
+    sections = preprocessor.create_thresholded_sections() # Get sections where device was worn
+
+    if verbosity > 1:
+        for i, section in enumerate(sections):
+            print(f"Section {i+1} data points: {len(section)}") 
+
+    
+    # Apply resmapling to regularise intervals of measured data
+    # keeps sample freq the same
+    resample_freq, _, _ = preprocessor.compute_sample_freq(sections)
+    resampled_sections = preprocessor.resample(sections, resample_freq)
+
+    #Plots.ppg_series(resampled_sections[3].ppg)
+    Plots.ppg_series_compare_datetime(sections[0].reset_index(), resampled_sections[0]) 
+
+    # Apply bandpass filter - Creates new column 'filtered_value' in df
+    preprocessor.filter_cheby2(resampled_sections)
+    
+    # Debugging prints
+    if verbosity >= 1:
+        print("Finished bandpass filtering  sections")
+    
+    # Plot entire compliance sections
+    #Plots.plot_ppg_sections_vs_time(filtered_sections)
+
+    # Detect and annotate heart beats
+    heartbeat_detector = HeartBeatDetector(config)
+    combined_sections, all_beats = heartbeat_detector.process_sections(resampled_sections)
+   
+    if verbosity >= 1:
+        print("Heart Beat Detection Complete")
+    
+    # Create checkpoint - mostly for development
+    # Save df as arrow file
+    if checkpoint_save:
+        combined_sections.reset_index(drop=True).to_feather(checkpoint_file)
+        print(f"Checkpoint created: combined_sections saved to {checkpoint_file}")
+     
     if load_from_checkpoint and checkpoint_id == 1:
         combined_sections = pd.read_feather(checkpoint_file)
     if debug_plots: 
