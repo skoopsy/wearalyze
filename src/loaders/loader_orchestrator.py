@@ -58,7 +58,7 @@ class LoaderOrchestrator:
         loader = DataLoaderFactory.get_loader(self.config)
 
         # For each sensor type in config - load and standardise the data.
-        for sensor in self.sensor_types:
+        for sensor in self.sensor_type:
             sensor_data = loader.load_sensor_data(sensor, files)
             if not sensor_data.empty:
                 sensor_data = loader.standardise(sensor, sensor_data)

@@ -4,7 +4,7 @@ import pandas as pd
 class BaseLoader(ABC):
 
     @abstractmethod
-    def load_data(self, file_paths):
+    def load_sensor_data(self, sensor, files):
         """ Load and pre-process data from input files """
         pass
     

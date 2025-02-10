@@ -38,13 +38,13 @@ class PolarVerityLoader(BaseLoader):
         if pattern is None:
             raise ValueError(f"Sensor type not supported / incorrect: {sensor}")
 
-        sensor_files = [f for f in file if re.search(pattern, os.path.basename(f))]
+        sensor_files = [f for f in files if re.search(pattern, os.path.basename(f))]
         if not sensor_files:
             print(f"PolarVerityLoader.py: No files found for sensor: {sensor}")
             return pd.DataFrame() # Empty df
 
         data = []
-        req_cols = self.required_columns{sensor.get(sensor)
+        req_cols = self.required_columns.get(sensor)
 
         for file_path in sensor_files:
             file_data = pd.read_csv(file_path, delimiter=";")
@@ -52,9 +52,9 @@ class PolarVerityLoader(BaseLoader):
                 raise ValueError(f"File {file_path} is missing required columns for sensor: {sensor}. Expected {req_cols}")
             data.append(file_data)
         
-        return pd.concat(data_frames, ignore_index=True)
+        return pd.concat(data, ignore_index=True)
     
-    def standardise(self, data):
+    def standardise(self, sensor_type, data):
         """
         Standardise Polar Verity Sense data
         """
@@ -68,7 +68,7 @@ class PolarVerityLoader(BaseLoader):
         
         #TODO This method may need to be stated in config, probably better methods, maybe even kalman. 
         # Avg 3 ppg channels
-        if sensor == "ppg":
+        if sensor_type == "ppg":
             data['ppg'] = data[["ppg_ch0","ppg_ch1", "ppg_ch2"]].mean(axis=1)
                 
         #TODO Could remove unused columns here to keep memory lower, for later

@@ -1,5 +1,5 @@
 from src.loaders.config_loader import get_config
-from src.loaders.loader_factory import DataLoaderFactory
+from src.loaders.loader_orchestrator import LoaderOrchestrator
 from src.checkpoints.checkpoint_manager import CheckpointManager
 
 from src.preprocessors.ppg_preprocess import PPGPreProcessor
@@ -31,7 +31,7 @@ def main():
     #TODO Create from_config() functions in each class to feed config in optionally
     verbosity = config['outputs']['print_verbosity']
     debug_plots = config['outputs']['debug_plots']
-    file_paths = config['data_source']['file_paths']
+    #file_paths = config['data_source']['file_paths']
     device = config['data_source']['device']
     sensor_type = config['data_source']['sensor_type']
     threshold = config['ppg_preprocessing']['threshold']
@@ -50,7 +50,7 @@ def main():
     if not load_checkpoint:
 
         load_orchestrator = LoaderOrchestrator(config)
-        all_data = orchestrator.load_all()
+        all_data = load_orchestrator.load_all()
 
         if verbosity:
             print("Data loading complete. Loaded subjects:")

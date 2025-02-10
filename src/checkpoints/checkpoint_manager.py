@@ -14,7 +14,7 @@ class CheckpointManager:
 
     def save(self, data):
 
-        directory = os.path.dirname(self.save_config.get("directory")
+        directory = os.path.dirname(self.save_config.get("directory"))
         data_id = self.save_config.get("data_id")
         checkpoint_id = self.save_config.get("checkpoint_id")
         self.fpath = os.path.join(directory, f"{checkpoint_id}_{data_id}.pkl")
@@ -29,7 +29,7 @@ class CheckpointManager:
 
     def load(self):
 
-        directory = os.path.dirname(self.load_config.get("directory")
+        directory = os.path.dirname(self.load_config.get("directory"))
         data_id = self.load_config.get("data_id")
         checkpoint_id = self.load_config.get("checkpoint_id")
         self.fpath = os.path.join(directory, f"{checkpoint_id}_{data_id}.pkl")
