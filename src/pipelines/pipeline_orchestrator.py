@@ -1,6 +1,4 @@
-from .ppg_pipeline import PPGPipeline
-from .acc_pipeline import ACCPipeline
-from src.utils.config_loader import get_config
+from .pipeline_factory import PipelineFactory
 
 class PipelineOrchestrator:
     
