@@ -16,7 +16,7 @@
 	},
     "checkpoint":{
         "load": {
-            "status": true,
+            "status": false,
             "directory": "data/checkpoints/",
             "checkpoint_id": 1,
             "data_id": "polar_test_1"
@@ -35,7 +35,7 @@
         "order": 4
     },
     "ppg_preprocessing": {
-        "threshold": 10000,
+        "threshold": 0,
         "min_duration": 30
     },
     "ppg_processing": {

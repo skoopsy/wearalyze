@@ -1,3 +1,5 @@
+from .compliance_check_factory import ComplianceCheckFactory
+
 from scipy.signal import cheby2, filtfilt
 import pandas as pd
 import numpy as np
@@ -7,53 +9,18 @@ class PPGPreProcessor:
     def __init__(self, data, config):
         self.data = data
         self.config = config
+        self.device = config['data_source']['device']
 
-    def create_thresholded_sections(self):
-        """Identify valid sections of data based on threshold."""
-        threshold = self.config['ppg_preprocessing']['threshold']
-        min_duration = self.config['ppg_preprocessing']['min_duration']
-        max_length = 60000
-
-        # Mark sections above threshold
-        self.data['above_threshold'] = self.data['ppg'] > threshold
-        
-        self.data['section_id'] = (self.data['above_threshold'] != self.data['above_threshold'].shift()).cumsum()
-         
-        sections = [section_df for _, section_df in self.data[self.data['above_threshold']].groupby('section_id')]
-        
-        # Filter sections by duration
-        valid_sections = []
-        for section in sections:
-            
-            start_time = section['timestamp_ms'].iloc[0]
-            end_time = section['timestamp_ms'].iloc[-1]
-            duration = end_time - start_time
-
-            #if duration >= timedelta(seconds=min_duration):
-            if duration >= min_duration*1000: # converted from s to ms
-                section['data_points'] = len(section)
-                
-                if len(section) > max_length:
-                    for i in range(0, len(section), max_length):
-                        subsection = section.iloc[i:i + max_length].copy()
-                        valid_sections.append(subsection)
-                        print(f"Created subsection with {len(subsection)} data points")
-                else:
-                    valid_sections.append(section)
-        
-        # Re-assign a new section_id after filtering out other sections
-        for i, section_df in enumerate(valid_sections, start=1):
-            section_df['section_id'] = i
-
-            # Drop the above thrshold column as its not needed
-            if 'above_threshold' in section_df.columns:
-                section_df = section_df.drop(columns=['above_threshold'], errors='ignore')
-            if 'data_points' in section_df.columns:
-                section_df = section_df.drop(columns=['data_points'], errors='ignore')
-            valid_sections[i - 1] = section_df 
-        breakpoint()
-        return valid_sections
+        # Factory to get device specific compliance thresholding methods
+        self.compliance_check_method = ComplianceCheckFactory.get_check_method(self.device)
+ 
+    def create_compliance_sections(self):
+        """ 
+        Delegates device compliance thresholding to device specific method
+        """
     
+        return self.compliance_check_method.create_compliance_sections(self.data, self.config)
+         
     def compute_sample_freq(self, sections: list(), downsampling_factor=1):
         """
         Computess the sampling frequency of input data

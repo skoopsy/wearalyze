@@ -16,6 +16,7 @@ def main():
     # Parse cmd line args and load config
     config = get_config()
 
+    verbosity = config['outputs']['print_verbosity']
     load_checkpoint = config["checkpoint"]["load"]["status"]
     l_checkpoint_id = config["checkpoint"]["load"]["checkpoint_id"]
     save_checkpoint = config["checkpoint"]["save"]["status"]
@@ -40,8 +41,6 @@ def main():
         all_data = checkpoint_mgr.load()
     
     subjects = create_subjects_from_nested_dicts(all_data)
-   
-    breakpoint()
  
     pipeline_orchestrator = PipelineOrchestrator(subjects, config)
     pipeline_orchestrator.run()

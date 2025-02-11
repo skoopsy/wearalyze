@@ -47,7 +47,7 @@ class PolarVerityLoader(BaseLoader):
         req_cols = self.required_columns.get(sensor)
 
         for file_path in sensor_files:
-            file_data = pd.read_csv(file_path, delimiter=";")
+            file_data = pd.read_csv(file_path, delimiter=";", usecols=req_cols)
             if not set(req_cols).issubset(file_data.columns):
                 raise ValueError(f"File {file_path} is missing required columns for sensor: {sensor}. Expected {req_cols}")
             data.append(file_data)
@@ -62,7 +62,6 @@ class PolarVerityLoader(BaseLoader):
         if "sensor timestamp [ns]" in data.columns:
             # Change timestamp from ns to ms for standardisation
             data['timestamp_ms'] = data['sensor timestamp [ns]']/1000000	
-
         # Column remapping
         data = self._col_name_remap(data)
         

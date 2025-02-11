@@ -16,8 +16,8 @@ class PPGPipeline:
         
         preprocessor = PPGPreProcessor(self.sensor.data, self.config)
         #TODO section thresholding is for corsano only, polar?
-        sections = preprocessor.create_thresholded_sections()
-        
+        sections = preprocessor.create_compliance_sections()
+         
         resample_freq, _, _ = preprocessor.compute_sample_freq(sections)
         resampled_sections = preprocessor.resample(sections, resample_freq)
 
