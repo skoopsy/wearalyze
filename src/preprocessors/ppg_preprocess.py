@@ -51,7 +51,7 @@ class PPGPreProcessor:
             if 'data_points' in section_df.columns:
                 section_df = section_df.drop(columns=['data_points'], errors='ignore')
             valid_sections[i - 1] = section_df 
-
+        breakpoint()
         return valid_sections
     
     def compute_sample_freq(self, sections: list(), downsampling_factor=1):

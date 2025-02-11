@@ -39,10 +39,10 @@ def main():
     if load_checkpoint and l_checkpoint_id == 1:
         all_data = checkpoint_mgr.load()
     
-    breakpoint()
-
     subjects = create_subjects_from_nested_dicts(all_data)
-    
+   
+    breakpoint()
+ 
     pipeline_orchestrator = PipelineOrchestrator(subjects, config)
     pipeline_orchestrator.run()
 
