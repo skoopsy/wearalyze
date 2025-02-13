@@ -45,6 +45,7 @@ def main():
     pipeline_orchestrator = PipelineOrchestrator(subjects, config)
     pipeline_orchestrator.run()
 
+    breakpoint()
     """
     Old plotting, need to integrate it into the pipelines and config
 
