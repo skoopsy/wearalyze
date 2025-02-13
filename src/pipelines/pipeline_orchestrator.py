@@ -25,6 +25,7 @@ class PipelineOrchestrator:
                                                             self.config
                     )
                     pipeline.run()
+                    # Add try except back in
                     try:
                         a = None
                     except ValueError as e:

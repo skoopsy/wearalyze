@@ -22,11 +22,12 @@
             "data_id": "polar_test_1"
         },
         "save": {
-            "status": false,
+            "status": true,
             "directory": "data/checkpoints/",
             "checkpoint_id": 1,
-            "data_id": "polar_test_1"
-        }
+            "data_id": "polar_test_x"
+        },
+        "filename_format": "{checkpoint_id}_{data_id}.pkl - NOT IMPLEMENTED"
     },
     "filter": {
         "sample_rate": 100,
