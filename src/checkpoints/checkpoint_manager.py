@@ -44,7 +44,7 @@ class CheckpointManager:
         data_id = self.load_config.get("data_id")
         checkpoint_id = self.get_load_id()
         
-        return os.path.join(directory, f"{checkpoint_id}_{data_id}.pkl}")
+        return os.path.join(directory, f"{checkpoint_id}_{data_id}.pkl")
 
     def get_save_path(self) -> str:
         """
@@ -64,7 +64,7 @@ class CheckpointManager:
             return None
         
         save_path = self.get_save_path()
-        directory = ps.path.dirname(save_path)
+        directory = os.path.dirname(save_path)
 
         if not os.path.exists(directory):
             os.makedirs(directory, exist_ok=True)
@@ -78,7 +78,7 @@ class CheckpointManager:
         """ Load data from checkpoint file using config and pickle """
 
         if not self.get_load_status():
-            print("[CheckpointManager] Checkpoint loading is disabled in config['checkpoint']['load']['status']"))
+            print("[CheckpointManager] Checkpoint loading is disabled in config['checkpoint']['load']['status']")
             return None
 
         load_path = self.get_load_path()
@@ -97,3 +97,20 @@ class CheckpointManager:
         """ Check if checkpoint file exists and checkpoint id matches """
         return os.path.exists(self.get_load_path())
 
+    def conditional_save_load(self, checkpoint_id: int, save_data=None):
+        """
+        Handles conditional statment for load and save checking
+        Replaces the need for repetative conditional statements for checking
+        if need to load or save data, simply feed in the checkpoint id.
+        """
+
+        if self.get_load_status() and self.get_load_id() == checkpoint_id and self.exists():
+            print(f"[CheckpointManager] Loading checkpoint {checkpoint_id}")
+            return self.load()
+    
+        if self.get_save_status() and self.get_save_id() == checkpoint_id and save_data is not None:
+            print(f"[CheckpointManager] Saving checkpoint {checkpoint_id}")
+            return self.save(save_data)
+
+        # This is a hack - if no checkpoint loaded, return input data
+        return data

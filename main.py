@@ -8,23 +8,17 @@ from src.visuals.plots import Plots
 import matplotlib.pyplot as plt
 import pandas as pd
 import os
-import pyarrow.feather as feather # Hopefully can remove in prod
+import pyarrow.feather as feather # Can remove, switched to pickle
 
 #TODO add tests for all the extra classes fromt the past week! 12/12/2024
 
 def main():
     # Parse cmd line args and load config
     config = get_config()
-
     verbosity = config['outputs']['print_verbosity']
-    load_checkpoint = config["checkpoint"]["load"]["status"]
-    l_checkpoint_id = config["checkpoint"]["load"]["checkpoint_id"]
-    save_checkpoint = config["checkpoint"]["save"]["status"]
-    s_checkpoint_id = config["checkpoint"]["save"]["checkpoint_id"]
-    
-    checkpoint_mgr = CheckpointManager(config=config)
-    
-    if not load_checkpoint:
+    checkpoint = CheckpointManager(config=config)
+   
+    if not checkpoint.get_load_status(): 
 
         load_orchestrator = LoaderOrchestrator(config)
         all_data = load_orchestrator.load_all()
@@ -34,12 +28,8 @@ def main():
             for subject in all_data.keys():
                 print(f" {subject}")
 
-    if save_checkpoint and s_checkpoint_id == 1:
-        checkpoint_mgr.save(all_data)   
-
-    if load_checkpoint and l_checkpoint_id == 1:
-        all_data = checkpoint_mgr.load()
-    
+    checkpoint.conditional_save_load(checkpoint_id=1, save_data=all_data)   
+ 
     subjects = create_subjects_from_nested_dicts(all_data)
  
     pipeline_orchestrator = PipelineOrchestrator(subjects, config)
