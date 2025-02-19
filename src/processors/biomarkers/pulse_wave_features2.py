@@ -60,7 +60,7 @@ class PulseWaveFeatures:
             - savitszky-golay
         
         Returns:
-            Nothing - Not even None because appraently thats bad practice in python?! It modifies the self.data df by adding the output column to it.
+            Modifies the self.data df in place by adding the output column.
 
         """
         smoother = SignalSmoothing(

@@ -113,4 +113,4 @@ class CheckpointManager:
             return self.save(save_data)
 
         # This is a hack - if no checkpoint loaded, return input data
-        return data
+        return save_data

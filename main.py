@@ -17,6 +17,7 @@ def main():
     config = get_config()
     verbosity = config['outputs']['print_verbosity']
     checkpoint = CheckpointManager(config=config)
+    all_data = []
    
     if not checkpoint.get_load_status(): 
 
@@ -27,11 +28,11 @@ def main():
             print("Data loading complete. Loaded subjects:")
             for subject in all_data.keys():
                 print(f" {subject}")
-
+ 
+        subjects = create_subjects_from_nested_dicts(all_data)
+ 
     checkpoint.conditional_save_load(checkpoint_id=1, save_data=all_data)   
- 
-    subjects = create_subjects_from_nested_dicts(all_data)
- 
+
     pipeline_orchestrator = PipelineOrchestrator(subjects, config)
     pipeline_orchestrator.run()
 

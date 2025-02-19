@@ -25,7 +25,7 @@ class PPGPipeline:
        
         # Start pipeline 
         preprocessor = PPGPreProcessor(self.sensor.data, self.config)
-        #TODO section thresholding is for corsano only, polar?
+        #TODO section thresholding is for corsano only, polar? Have tweaked config
         sections = preprocessor.create_compliance_sections()
          
         resample_freq, _, _ = preprocessor.compute_sample_freq(sections)
@@ -63,5 +63,6 @@ class PPGPipeline:
 
         pwf = PulseWaveFeatures(data)
         data, beat_features = pwf.compute()
-
+        
+        breakpoint()
         return data, beat_features                 
