@@ -16,16 +16,16 @@
 	},
     "checkpoint":{
         "load": {
-            "status": false,
-            "directory": "data/checkpoints/",
-            "checkpoint_id": 1,
-            "data_id": "polar_test_1"
-        },
-        "save": {
             "status": true,
             "directory": "data/checkpoints/",
-            "checkpoint_id": 1,
-            "data_id": "polar_test_x"
+            "checkpoint_id": 3,
+            "data_id": "polar_test_xx"
+        },
+        "save": {
+            "status": false,
+            "directory": "data/checkpoints/",
+            "checkpoint_id": 3,
+            "data_id": "polar_test_xx"
         },
         "filename_format": "{checkpoint_id}_{data_id}.pkl - NOT IMPLEMENTED"
     },
