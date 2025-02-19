@@ -1,5 +1,6 @@
 # project folders
 data/*
+data/configs/*
 **/__pycache__
 
 # Byte-compiled / optimized / DLL files

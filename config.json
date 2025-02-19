@@ -4,16 +4,30 @@
         "debug_plots": false
     },
     "data_source":{
-		"device": "corsano-2872b",
-		"sensor_type": "PPG",
-		"file_paths": ["data/corsano2872b_ppg_green.csv"]
+        "subjects_dir": "data/polar/subject/",
+        "multi_subjects": false,
+        "subjects_to_load": ["all"],
+        "multi_condition": {
+            "status": false,
+            "conditions": ["pre_heat_exposure", "intra_heat_exposure", "post_heat_exposure"]
+        },
+		"device": "polar-verity",
+		"sensor_type": ["ppg","acc"]
 	},
-    "checkpoints":{
-        "load_from_checkpoint": true,
-        "directory": "data/checkpoints",
-        "checkpoint_id": 1,
-        "data_id": "corsano_ppg_g",
-        "checkpoint_save": true
+    "checkpoint":{
+        "load": {
+            "status": false,
+            "directory": "data/checkpoints/",
+            "checkpoint_id": 1,
+            "data_id": "polar_test_1"
+        },
+        "save": {
+            "status": true,
+            "directory": "data/checkpoints/",
+            "checkpoint_id": 1,
+            "data_id": "polar_test_x"
+        },
+        "filename_format": "{checkpoint_id}_{data_id}.pkl - NOT IMPLEMENTED"
     },
     "filter": {
         "sample_rate": 100,
@@ -22,7 +36,7 @@
         "order": 4
     },
     "ppg_preprocessing": {
-        "threshold": 10000,
+        "threshold": 0,
         "min_duration": 30
     },
     "ppg_processing": {
