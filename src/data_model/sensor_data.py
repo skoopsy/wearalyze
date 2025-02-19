@@ -2,7 +2,7 @@ import pandas as pd
 
 class SensorData:
     """ Encapsulates sensor data for specified sensor """
-    def __init__(self, sensor_type: str, data: pd.DataFrame, subject=None, conditon=None):
+    def __init__(self, sensor_type: str, data: pd.DataFrame, subject=None, condition=None):
         self.sensor_type = sensor_type
         self.data = data
         self.subject = subject
