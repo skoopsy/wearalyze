@@ -18,12 +18,6 @@ class PPGPipeline:
     def run(self):
         print("[PPGPipeline] Preprocessing PPG data")
         
-        # Checkpoint load
-        if self.checkpoint.get_load_status() and self.checkpoint.get_load_id == 2:
-            print("[PPGPineline] Loading from checkpoint 2")
-            return self.checkpoint.load()
-       
-        # Start pipeline 
         preprocessor = PPGPreProcessor(self.sensor.data, self.config)
         #TODO section thresholding is for corsano only, polar? Have tweaked config
         sections = preprocessor.create_compliance_sections()
@@ -44,17 +38,9 @@ class PPGPipeline:
         data = biomarkers.compute_bpm_from_ibi_group()
         biomarkers.compute_group_ibi_stats()
 
-        # Checkpoint
-        if self.checkpoint.get_save_status() and self.checkpoint.get_save_id() == 3:
-            chkpnt_path = self.checkpoint.get_save_path()
-            print(f"[PPGPipeline] Saving checkpoint 3: {chkpnt_path}")
-            self.checkpoint.save(data)
-
-        if self.checkpoint.get_load_status() and self.checkpoint.get_load_id() == 3:
-            chkpnt_path = self.checkpoint.get_load_path()
-            print(f"[PPGPineline] Loading checkpoint 3:{chkpnt_path}")
-
-        # Continue
+        # SAVE or LOAD Checkpoint here!
+       
+         # Continue
         sqi = SQIFactory.create_sqi(
             sqi_type=self.config["ppg_processing"]["sqi_type"],
             sqi_composite_details=self.config["ppg_processing"]["sqi_composite_details"]
