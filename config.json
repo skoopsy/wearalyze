@@ -16,7 +16,7 @@
 	},
     "checkpoint":{
         "load": {
-            "status": true,
+            "status": false,
             "directory": "data/checkpoints/",
             "checkpoint_id": 3,
             "data_id": "polar_test_xx"

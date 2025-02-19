@@ -1,38 +1,28 @@
 from src.loaders.config_loader import get_config
 from src.loaders.loader_orchestrator import LoaderOrchestrator
 from src.checkpoints.checkpoint_manager import CheckpointManager
-from src.data_model.subject_factory import create_subjects_from_nested_dicts
+from src.state.app_state import AppState
+
+from src.data_model.subject_factory import create_subjects_from_nested_dicts # surplus?
+
 from src.pipelines.pipeline_orchestrator import PipelineOrchestrator
 from src.visuals.plots import Plots
 
 import matplotlib.pyplot as plt
 import pandas as pd
 import os
-import pyarrow.feather as feather # Can remove, switched to pickle
-
-#TODO add tests for all the extra classes fromt the past week! 12/12/2024
 
 def main():
     # Parse cmd line args and load config
     config = get_config()
     verbosity = config['outputs']['print_verbosity']
     checkpoint = CheckpointManager(config=config)
-    all_data = []
-   
-    if not checkpoint.get_load_status(): 
-
-        load_orchestrator = LoaderOrchestrator(config)
-        all_data = load_orchestrator.load_all()
-
-        if verbosity:
-            print("Data loading complete. Loaded subjects:")
-            for subject in all_data.keys():
-                print(f" {subject}")
- 
-        subjects = create_subjects_from_nested_dicts(all_data)
- 
-    checkpoint.conditional_save_load(checkpoint_id=1, save_data=all_data)   
-
+    
+    # Get app state (initialise or load)
+    app_state = AppState(config, checkpoint).load()
+    
+    # Run processing pipeline
+    subjects = app_state.get_subjects()
     pipeline_orchestrator = PipelineOrchestrator(subjects, config)
     pipeline_orchestrator.run()
 
