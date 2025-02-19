@@ -2,11 +2,11 @@ import pandas as pd
 
 class SensorData:
     """ Encapsulates sensor data for specified sensor """
-    def __init__(self, sensor_type: str, data: pd.DataFrame, parent_subject=None, parent_conditon=None):
+    def __init__(self, sensor_type: str, data: pd.DataFrame, subject=None, conditon=None):
         self.sensor_type = sensor_type
         self.data = data
-        self.parent_subject = parent_subject
-        self.parent_condition = parent_condition
+        self.subject = subject
+        self.condition = condition
     
     def get_data(self) -> pd.DataFrame:
         """
@@ -15,9 +15,9 @@ class SensorData:
         return self.data
 
     def get_subject(self):
-        return self.parent_subject
+        return self.subject
 
-    def get__condition():
+    def get_condition():
         return self.condition
 
     def __repr__(self) -> str:
