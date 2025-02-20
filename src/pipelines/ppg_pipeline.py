@@ -41,9 +41,9 @@ class PPGPipeline:
         heartbeat_detector = HeartBeatDetector(self.config)
         combined_sections, all_beats = heartbeat_detector.process_sections(sections)
         organiser = BeatOrganiser(group_size=self.config["ppg_processing"]["sqi_group_size"])
-        data = organiser.group_n_beats_inplace(combined_sections)
+        grouped_beats = organiser.group_n_beats_inplace(combined_sections)
         
-        return data 
+        return grouped_beats, all_beats 
         
     def _basic_biomarkers(self, data):
         print("[PPGPipeline] Computing basic biomarkers.")
