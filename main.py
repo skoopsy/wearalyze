@@ -16,13 +16,13 @@ def main():
     # Parse cmd line args and load config
     config = get_config()
     verbosity = config['outputs']['print_verbosity']
-    checkpoint = CheckpointManager(config=config)
+    app_checkpoint = CheckpointManager(config=config['checkpoint']['app_state'])
     
     # Get app state (initialise or load)
-    app_state = AppState(config, checkpoint).load()
-    
-    # Run processing pipeline
+    app_state = AppState(config, app_checkpoint).load()
     subjects = app_state.get_subjects()
+
+    # Run processing pipeline
     pipeline_orchestrator = PipelineOrchestrator(subjects, config)
     pipeline_orchestrator.run()
 

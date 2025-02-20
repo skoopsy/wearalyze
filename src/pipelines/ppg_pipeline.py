@@ -1,4 +1,5 @@
 from src.checkpoints.checkpoint_manager import CheckpointManager
+from src.checkpoints.checkpoint_decorator import with_checkpoint
 from src.preprocessors.ppg_preprocess import PPGPreProcessor
 from src.processors.beat_detectors.beat_detection import HeartBeatDetector
 from src.processors.sqi.beat_organiser import BeatOrganiser
@@ -13,13 +14,13 @@ class PPGPipeline:
     def __init__(self, sensor, config):
         self.sensor = sensor
         self.config = config
-        self.checkpoint = CheckpointManager(config=config)
+        self.checkpoint = CheckpointManager(config=config['checkpoint']['pipeline_ppg'])
 
     def run(self):
         
         sections = self._preprocess()
-        data = self._process_beats(sections)
-        data = self._basic_biomarkers(data)
+        grouped_beats, all_beats = self._process_beats(sections)
+        data = self._basic_biomarkers(grouped_beats)
         sqi_results = self._basic_sqi(data)
         breakpoint()
         data, beat_features = self._pulse_wave_features(data)
@@ -35,7 +36,8 @@ class PPGPipeline:
         preprocessor.filter_cheby2(resampled_sections)
         
         return resampled_sections
-
+    
+    @with_checkpoint(checkpoint_id=2, stage_name="process_beats")
     def _process_beats(self, sections):
         print("[PPGPipeline] Processing beats.")
         heartbeat_detector = HeartBeatDetector(self.config)

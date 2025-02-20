@@ -8,8 +8,8 @@ class CheckpointManager:
         if not config:
             raise ValueError("Config must be provided")
         
-        self.save_config = config["checkpoint"]["save"]
-        self.load_config = config["checkpoint"]["load"]
+        self.save_config = config["save"]
+        self.load_config = config["load"]
 
     def get_load_status(self) -> bool:
         """
@@ -60,7 +60,7 @@ class CheckpointManager:
         """ Save data to checkpoint file using config and pickle """
 
         if not self.get_save_status():
-            print("[CheckpointManager] Checkpoint savinf is disabled in config")
+            print("[CheckpointManager] Checkpoint saving is disabled in config")
             return None
         
         save_path = self.get_save_path()

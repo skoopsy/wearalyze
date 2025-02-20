@@ -59,3 +59,5 @@ class AppState:
         if self.all_data is None:
             self.load()
         return self.all_data
+
+        
