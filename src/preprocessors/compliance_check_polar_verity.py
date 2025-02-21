@@ -1,5 +1,3 @@
-import pandas as pd
-
 class ComplianceCheckPolarVerity:
 
     def create_compliance_sections(self, data, config): 
@@ -12,7 +10,9 @@ class ComplianceCheckPolarVerity:
         min_duration = config['ppg_preprocessing']['min_duration'] * 1000  # Convert to ms
         max_length = 60000
 
-        data['above_threshold'] = data['ppg'] < threshold
+        #TODO Triple check the logic here!!!
+        # Rows with ppg greater than threshold are marked as compliant
+        data['above_threshold'] = data['ppg'] > threshold
         data['section_id'] = (data['above_threshold'] != data['above_threshold'].shift()).cumsum()
         sections = [df for _, df in data[data['above_threshold']].groupby('section_id')]
         

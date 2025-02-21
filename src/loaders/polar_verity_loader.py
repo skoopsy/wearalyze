@@ -40,7 +40,7 @@ class PolarVerityLoader(BaseLoader):
 
         sensor_files = [f for f in files if re.search(pattern, os.path.basename(f))]
         if not sensor_files:
-            print(f"PolarVerityLoader.py: No files found for sensor: {sensor}")
+            raise ValueError(f"PolarVerityLoader.py: No files found for sensor: {sensor}")
             return pd.DataFrame() # Empty df
 
         data = []
