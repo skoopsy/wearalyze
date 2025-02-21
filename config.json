@@ -17,13 +17,13 @@
     "checkpoint":{
         "app_state": {
             "load": {
-                "status": true,
+                "status": false,
                 "directory": "data/checkpoints/app_state/",
                 "checkpoint_id": 1,
                 "data_id": "corsano_test_app_a"
             },
             "save": {
-                "status": false,
+                "status": true,
                 "directory": "data/checkpoints/app_state/",
                 "checkpoint_id": 1,
                 "data_id": "corsano_test_app_a"
@@ -32,13 +32,13 @@
         },
         "pipeline_ppg": {
             "load": {
-                "status": true,
+                "status": false,
                 "directory": "data/checkpoints/pipeline_ppg/",
                 "checkpoint_id": 2,
                 "data_id": "corsano_test_pipeline_ppg_a"
             },
             "save": {
-                "status": false,
+                "status": true,
                 "directory": "data/checkpoints/pipeline_ppg/",
                 "checkpoint_id": 2,
                 "data_id": "corsano_test_pipeline_ppg_a"
@@ -54,8 +54,8 @@
         "order": 4
     },
     "ppg_preprocessing": {
-        "threshold": 0,
-        "min_duration": 30
+        "threshold": 10000,
+        "min_duration": 100
     },
     "ppg_processing": {
         "beat_detector": "ampd",

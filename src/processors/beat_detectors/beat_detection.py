@@ -14,12 +14,19 @@ class HeartBeatDetector:
     
     def process_sections(self, sections: list()):
         """
-        Main processing methods to detect and and mark heart (quasi-periodic) beats
+        Main processing methods to detect and and mark heart (quasi-periodic)
+        beats
+        
         Args:
-            sections (list of pd.Dataframe): List of preprocessed dataframes with sections of heart beats, typically sectioned due to compliance and so are combined here, may give an option to combine or keep separate later.
+            sections (list of pd.Dataframe): List of preprocessed dataframes 
+            with sections of heart beats, typically sectioned due to 
+            compliance and so are combined here, may give an option to combine
+            or keep separate later.
+
         Returns:
             pd.DataFrame: Combined annotated sections
-            list of pd.DataFrame: List of individual heart beats based on trough segmentation.
+            list of pd.DataFrame: List of individual heart beats based on
+            trough segmentation.
         """
         # Instantiate beat detector method from config
         beat_detector = PeakDetectorFactory.create(self.beat_detector_name)
@@ -59,7 +66,9 @@ class HeartBeatDetector:
 
     def _annotate_heart_beats(self, section: pd.DataFrame, troughs: list(), section_id: int):
         """
-        Annotates a section with detected heart beats, troughs, peaks, and section id
+        Annotates a section with detected heart beats, troughs, peaks, and 
+        section id
+        
         Args:
             section (pd.DataFrame): Single PPG section
             troughs (list of int): Index of detected troughs

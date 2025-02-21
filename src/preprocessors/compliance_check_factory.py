@@ -7,7 +7,7 @@ class ComplianceCheckFactory:
     """
 
     DEVICE_CLASSES = {
-        "corsano287-2b": ComplianceCheckCorsano2872b,
+        "corsano-2872b": ComplianceCheckCorsano2872b,
         "polar-verity": ComplianceCheckPolarVerity
     }
 

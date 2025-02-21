@@ -12,19 +12,23 @@ class AMPDDetector(BaseDetector):
 
     def _peak_detect_ampd(self, signal):
         """
-        Automatic Multiscale Peak Detection for noisey periodic and quasia-periodic signals
-        doi:10.3390/a5040588
-        I have added some more robustness with edge case handling such as small or 
-        linear signals    
-    
-        args:
-        signal - 1D signal to run ampd on (numpy.ndarray)
+        Automatic Multiscale Peak Detection for noisey periodic and 
+        quasia-periodic signalsdoi:10.3390/a5040588
 
-        returns:
-        peaks - Indices of detected peaks (numpy.ndarray)
-        lms - Local Maxima Scalogram matrix (numpy.ndarray)
-        gamma - Vector used to find global minimum (numpy.ndarray)
-        lambda_scale - Scale at which global minimum occurs (int)
+        I have added some more robustness with edge case handling such as small
+        or linear signals    
+        
+        Note: This uses a lot of memory, I can't recall where the part is that
+        limits the input size    
+        
+        Args:
+            signal - 1D signal to run ampd on (numpy.ndarray)
+
+        Returns:
+            peaks - Indices of detected peaks (numpy.ndarray)
+            lms - Local Maxima Scalogram matrix (numpy.ndarray)
+            gamma - Vector used to find global minimum (numpy.ndarray)
+            lambda_scale - Scale at which global minimum occurs (int)
         """
         print("starting ampd _peak_detect_ampd") 
         # Handle small input signals:
@@ -62,7 +66,7 @@ class AMPDDetector(BaseDetector):
         L = int(np.ceil(N / 2.0)) - 1 # Maximum window size
         # Initialise local maxima scalogram (LMS)
         lms = np.random.rand(L, N) + 1 # Rand val in [1, 2)
-        #self._memory_usage(lms)
+        self._memory_usage(lms)
         match implementation:
             case 0: # Pure python Loop version
                 for k in range(1, L + 1):
@@ -80,5 +84,5 @@ class AMPDDetector(BaseDetector):
 
         return lms
     
-    def _memory_usage(var):
+    def _memory_usage(self, var):
         print(f"Memory usage of variable: {sys.getsizeof(var)} bytes")
