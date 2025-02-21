@@ -5,7 +5,7 @@ class Corsano2872bLoader(BaseLoader):
     def __init__(self, config):
         self.config = config
 
-    def load_sensor_data(self, file_paths):
+    def load_sensor_data(self, sensor, file_paths):
         """
         Load data from Corsano 2872b - note the columns may change based
         on options of importing the data from api or portal
@@ -33,7 +33,7 @@ class Corsano2872bLoader(BaseLoader):
 
         return pd.concat(data_frames, ignore_index=True)
 
-    def standardise(self, data):
+    def standardise(self, sensor, data):
         """
         Standardise data from Corsano 2872b
         """
