@@ -12,18 +12,18 @@
             "conditions": ["pre_heat_exposure", "intra_heat_exposure", "post_heat_exposure"]
         },
 		"device": "polar-verity",
-		"sensor_type": ["ppg","acc"]
+		"sensor_type": ["ppg"]
 	},
     "checkpoint":{
         "app_state": {
             "load": {
-                "status": true,
+                "status": false,
                 "directory": "data/checkpoints/app_state/",
                 "checkpoint_id": 1,
                 "data_id": "polar_test_app_a"
             },
             "save": {
-                "status": false,
+                "status": true,
                 "directory": "data/checkpoints/app_state/",
                 "checkpoint_id": 1,
                 "data_id": "polar_test_app_a"
@@ -32,13 +32,13 @@
         },
         "pipeline_ppg": {
             "load": {
-                "status": true,
+                "status": false,
                 "directory": "data/checkpoints/pipeline_ppg/",
                 "checkpoint_id": 2,
                 "data_id": "polar_test_pipeline_ppg_a"
             },
             "save": {
-                "status": false,
+                "status": true,
                 "directory": "data/checkpoints/pipeline_ppg/",
                 "checkpoint_id": 2,
                 "data_id": "polar_test_pipeline_ppg_a"
