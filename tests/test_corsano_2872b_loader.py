@@ -15,9 +15,19 @@ def temp_csv_file(tmp_path):
         f.write(content)
     return file_path
 
+def config():
+    config = {
+        "data_source": {
+            "device": "corsano-2872b",
+            "sensor": ["ppg"]
+        }
+    }
+
+    return config
+
 def test_load_data(temp_csv_file):
-    loader = Corsano2872bLoader()
-    data = loader.load_data([temp_csv_file])  # Pass list with one file
+    loader = Corsano2872bLoader(config())
+    data = loader.load_sensor_data([temp_csv_file])  # Pass list with one file
 
     # Verify that the data is loaded as a DataFrame
     assert isinstance(data, pd.DataFrame), "Data should be a pandas DataFrame"
@@ -34,21 +44,21 @@ def test_empty_file(tmp_path):
     empty_file = tmp_path / "empty.csv"
     empty_file.touch()  # Create an empty file
     
-    loader = Corsano2872bLoader()
+    loader = Corsano2872bLoader(config)
     with pytest.raises(pd.errors.EmptyDataError):
-        loader.load_data([empty_file])
+        loader.load_sensor_data([empty_file])
 
 def test_invalid_file_format(tmp_path):
     invalid_file = tmp_path / "invalid.txt"
     invalid_file.write_text("invalid data\nwithout proper columns\n")
     
-    loader = Corsano2872bLoader()
+    loader = Corsano2872bLoader(config)
     with pytest.raises(ValueError, match="missing required columns"):
-        loader.load_data([invalid_file])
+        loader.load_sensor_data([invalid_file])
 
 def test_standardise(temp_csv_file):
-    loader = Corsano2872bLoader()
-    raw_data = loader.load_data([temp_csv_file])
+    loader = Corsano2872bLoader(config())
+    raw_data = loader.load_sensor_data([temp_csv_file])
     standardised_data = loader.standardise(raw_data)
     
     # Verify standardised data is df

@@ -15,22 +15,40 @@
 		"sensor_type": ["ppg","acc"]
 	},
     "checkpoint":{
-        "load": {
-            "status": false,
-            "directory": "data/checkpoints/",
-            "checkpoint_id": 1,
-            "data_id": "polar_test_1"
+        "app_state": {
+            "load": {
+                "status": true,
+                "directory": "data/checkpoints/app_state/",
+                "checkpoint_id": 1,
+                "data_id": "polar_test_app_a"
+            },
+            "save": {
+                "status": false,
+                "directory": "data/checkpoints/app_state/",
+                "checkpoint_id": 1,
+                "data_id": "polar_test_app_a"
+            },
+            "filename_format": "{checkpoint_id}_{data_id}.pkl - NOT IMPLEMENTED"
         },
-        "save": {
-            "status": true,
-            "directory": "data/checkpoints/",
-            "checkpoint_id": 1,
-            "data_id": "polar_test_x"
-        },
-        "filename_format": "{checkpoint_id}_{data_id}.pkl - NOT IMPLEMENTED"
+        "pipeline_ppg": {
+            "load": {
+                "status": true,
+                "directory": "data/checkpoints/pipeline_ppg/",
+                "checkpoint_id": 2,
+                "data_id": "polar_test_pipeline_ppg_a"
+            },
+            "save": {
+                "status": false,
+                "directory": "data/checkpoints/pipeline_ppg/",
+                "checkpoint_id": 2,
+                "data_id": "polar_test_pipeline_ppg_a"
+            },
+            "filename_format": "{checkpoint_id}_{data_id}.pkl - NOT IMPLEMENTED"
+        }
     },
     "filter": {
         "sample_rate": 100,
+
         "lowcut": 0.15,
         "highcut": 10,
         "order": 4

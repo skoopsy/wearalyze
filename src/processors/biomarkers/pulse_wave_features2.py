@@ -45,7 +45,7 @@ class PulseWaveFeatures:
         self._apply_signal_smoothing()
         
         # Compute derivatives
-        self._compute_derivative()        
+        self._compute_derivatives()        
         
         # Built beat-level features dataframe
         beats_features = self.create_beats_features()
@@ -71,7 +71,7 @@ class PulseWaveFeatures:
         )
         
         # Apply smoothing on a beat by beat basis via groupby method
-        smoother.group_apply(method="fda_bspline", b_basis=21, order=4)
+        smoother.group_apply(method="fda_bspline", n_basis=21, order=4)
 
     def _compute_derivatives(self):
         """
@@ -185,7 +185,7 @@ class PulseWaveFeatures:
 
         # Feature: ms - Max upslope of systole index
         try:
-            ms_idx_global = beat['sig_1deriv'].idmax()
+            ms_idx_global = beat['sig_1deriv'].idxmax()
             ms_idx_local = np.nanargmax(beat['sig_1deriv'].values)
             features_dict['ms'] = ms_idx_local
         except ValueError:
@@ -204,7 +204,7 @@ class PulseWaveFeatures:
         if zero_cross['sum'] > 0 and ms_idx_local is not None:
             zc_after_ms = [zc for zc in zero_cross['idxs'] if zc > ms_idx_local]
             if len(zc_after_ms) > 0:
-                first zc_idx_local = zc_after_ms[0]
+                first_zc_idx_local = zc_after_ms[0]
                 original_pos = zero_cross['idxs'].index(first_zc_idx_local)
                 systole_time = zero_cross['times'][original_pos]
 
@@ -265,15 +265,47 @@ class PulseWaveFeatures:
         )
         features_dict['zero_crossings'] = zero_cross
 
+        # Get beat start and duration
+        beat_start = beat['timestamp_ms'].iloc[0]
+        beat_end = beat['timestamp_ms'].iloc[-1]
+        beat_duration = beat_end - beat_start
+
+        # Set d2ydx2 signal to dedicated series variable
+        sig_d2ydx2 = beat['sig_2deriv'].values
+
         # a wave - max d2ydx2 prior to ms from dydx
-        
+        a_idx_local = None
+        a_val = None
+
+        if ms_idx_local > 0:
+
+            a_region = sig_d2ydx2[:ms_idx_local]
+            a_peaks = _local_maxima(a_region, prominence=0.1, min_peak_dist=2)
+            
+            if a_peaks:
+                a_idx_local = int(a_peaks[np.argmax(a_region[a_peaks])])
+                a_val = a_region[a_idx_local]
+
+        features_dict['a_wave'] = {
+            'idx_local': a_idx_local,
+            'value': a_val,
+            'time': beat['timestamp_ms'].iloc[a_idx_local] if a_idx_local is not None else None 
+        }                 
+
+        breakpoint()
         # b wave - first local minima after a
+        b_idx_local = None
+        b_val = None
+        
+        if a_idx_local is not None and a_idx_local < len(sig_d2ydx2) - 1:
+            b_region = sig_d2ydx2[a_idx_local + 1 :]
+            b_mimima = local_minima(b_region, prominence=0.1, min_peak_dist=2)
+            
+        # e wave - 2nd maxima of d2ydx2 after ms and before 0.6T, unless c is inflection point, in which case take first maximum
 
         # c wave - greatest max between b and e, if no max then 1st of the 1st max on dydx after e or first min on d3ydx3 after e
 
         # d wave - lowest min on d2ydx2 after c and before e (if no minima then coincident with c)
-
-        # e wave - 2nd maxima of d2ydx2 after ms and before 0.6T, unless c is inflection point, in which case take first maximum
 
         # f wave - 1st local minium of d2ydx2 after e and before 0.8T
 
@@ -410,4 +442,14 @@ class PulseWaveFeatures:
 
         return zero_crossings 
     
-    
+    def _local_maxima(signal: list, prominence: float = 0.1, min_peak_dist: int = 1) -> list:
+        """ Return maximum from a 1D signal using scipy find_peaks """    
+        peaks, _ = find_peaks(signal, prominence=prominence, distance=min_peak_dist)
+        
+        return peaks.tolist()
+
+    def _local_minima(signal: list, prominence: float = 0.1, min_peak_dist: int = 1) -> list:
+        """ Returns minimum indice from 1D signal using scipy find_peaks """
+        peaks, _ = find_peaks(-signal, prominence=prominence, distance=min_dist_peaks)
+        
+        return peaks.tolist()

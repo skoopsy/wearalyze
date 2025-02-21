@@ -2,7 +2,10 @@ import pandas as pd
 from .base_loader import BaseLoader
 
 class Corsano2872bLoader(BaseLoader):
-    def load_data(self, file_paths):
+    def __init__(self, config):
+        self.config = config
+
+    def load_sensor_data(self, file_paths):
         """
         Load data from Corsano 2872b - note the columns may change based
         on options of importing the data from api or portal

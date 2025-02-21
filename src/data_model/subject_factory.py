@@ -6,7 +6,7 @@ from typing import Dict, Any, List
 import pandas as pd
 
 def create_subject_from_nested_dict(subject_id: str, 
-                            data: Dict[str, Dict[str, pd.DataFrame]]
+                                    data: Dict[str, Dict[str, pd.DataFrame]]
 ) -> Subject:
     """
     Expected structure:
@@ -31,7 +31,10 @@ def create_subject_from_nested_dict(subject_id: str,
         condition = Condition(condition_name)
         
         for sensor_type, sensor_df in sensors_dict.items():
-            sensor_data = SensorData(sensor_type, sensor_df)
+            sensor_data = SensorData(sensor_type=sensor_type,
+                                     data=sensor_df,
+                                     subject=subject,
+                                     condition=condition)
             condition.add_sensor_data(sensor_data)
         
         subject.add_condition(condition)
