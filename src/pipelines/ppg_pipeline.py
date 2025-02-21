@@ -22,9 +22,11 @@ class PPGPipeline:
         grouped_beats, all_beats = self._process_beats(sections)
         data = self._basic_biomarkers(grouped_beats)
         sqi_results = self._basic_sqi(data)
-        breakpoint()
         data, beat_features = self._pulse_wave_features(data)
-
+        for i in range(100,300, 1):
+            Plots.plot_beat_with_features_deriv(data, beat_features, i)
+        breakpoint()
+             
         return data, beat_features
 
     def _preprocess(self):

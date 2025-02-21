@@ -240,19 +240,27 @@ class Plots:
             return value.get(inner_key, default)
         
         # unpack features 
-        y_systole_idx = extract_feature(features,'y', 'systole')['idx']
+        y_systole_idx = extract_feature(features,'y', 'systole')['idx_local']
         y_systole_time = extract_feature(features,'y', 'systole')['time']
         y_diastole_idx = None
 
         dydx_ms_idx = extract_feature(features, 'dydx', 'ms')
-        dydx_systole_idx = extract_feature(features,'dydx', 'systole')['idx']
-        dydx_diastole_idx = extract_feature(features,'dydx', 'diastole')['idx']
+        
+        if extract_features(features, 'dydx', 'systole')['detected']:
+            dydx_systole_idx = extract_feature(features,'dydx', 'systole')['idx_local']
+        else:
+            dydx_systole_idx=0
 
-        a_wave_idx = extract_feature(features, 'd2ydx2', 'a_wave')['idx']
-        b_wave_idx = extract_feature(features, 'd2ydx2', 'b_wave')['idx']
-        c_wave_idx = extract_feature(features, 'd2ydx2', 'c_wave')['idx']
-        d_wave_idx = extract_feature(features, 'd2ydx2', 'd_wave')['idx']
-        e_wave_idx = extract_feature(features, 'd2ydx2', 'e_wave')['idx']
+        if extract_feature(features, 'dydx', 'diastole')['detected']:
+            dydx_diastole_idx = extract_feature(features,'dydx', 'diastole')['idx_local']
+        else:
+            dydx_diastole_idx = 0
+
+        a_wave_idx = extract_feature(features, 'd2ydx2', 'a_wave')['idx_local']
+        b_wave_idx = extract_feature(features, 'd2ydx2', 'b_wave')['idx_local']
+        c_wave_idx = extract_feature(features, 'd2ydx2', 'c_wave')['idx_local']
+        d_wave_idx = extract_feature(features, 'd2ydx2', 'd_wave')['idx_local']
+        e_wave_idx = extract_feature(features, 'd2ydx2', 'e_wave')['idx_local']
 
         # Plot the beat signal and derivatives
         fig, axs = plt.subplots(5, 1, figsize=(8, 10), sharex=True)
