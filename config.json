@@ -49,7 +49,6 @@
     },
     "filter": {
         "sample_rate": 100,
-
         "lowcut": 0.15,
         "highcut": 10,
         "order": 4

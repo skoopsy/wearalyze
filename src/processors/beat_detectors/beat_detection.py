@@ -42,10 +42,9 @@ class HeartBeatDetector:
             section = section.reset_index(drop=True).copy()
             
             # Detect troughs (inverted signal as it will detect "peaks"    
-            signal = section.filtered_value * -1
-            detector_results = beat_detector.detect(signal)
-            troughs = detector_results["peaks"]
-
+            signal = (section.filtered_value * -1).values
+            troughs  = self._detect_peaks_fixed_chunk_size(signal, beat_detector)
+            
             if self.verbosity > 1:
                 print(f"[HeartBeatDetector] Troughs detected: {len(troughs)}")
             
@@ -70,7 +69,7 @@ class HeartBeatDetector:
         return combined_sections, all_beats
 
 
-    def _detect_beat_fixed_chunk_size(signal, beat_detector, chunk_size: int = 3000):
+    def _detect_peaks_fixed_chunk_size(self, signal, beat_detector, chunk_size: int = 12000):
         """
         Break a signal up into smaller chunks ready for periodic beat detection 
         algorithms. Smaller input signal length results in less memory usage,
@@ -78,7 +77,7 @@ class HeartBeatDetector:
         probably be better. A longer signal is better for very consistent signals. 
         You can balance this with your pre-processing steps!
 
-        Re-combines the peak/trough indices with correct offsets for output.
+        Re-combines the peak indices with correct offsets for output.
 
         Chunk size of 3000 (indicies) -> 30s of data at 100 Hz, make a function
         to do this dynamically based on resampling
@@ -89,23 +88,24 @@ class HeartBeatDetector:
             chunk_size (int) - Size of signal to forward to beat detector instance
         
         Returns:
-            troughs (list)
+            peaks (list)
         """
-        troughs = []
+        peaks = []
 
         for start_idx in range(0, len(signal), chunk_size):
-            end_idx = min(start_idx + check_size, len(signal))
+            print(f"[HeartBeatDetector] Chunk Started")
+            end_idx = min(start_idx + chunk_size, len(signal))
             chunk = signal[start_idx:end_idx]
 
             # Detect peaks (on inverted signal, so troughs)
             detector_results = beat_detector.detect(chunk) #TODO beatdetector.detect() check
-            chunk_troughs = detector_results["peaks"] # Local indicies 0 -> chunk len
+            chunk_peaks = detector_results["peaks"] # Local indicies 0 -> chunk len
             
             # Translate to global index
-            global_troughs = [t + start_idx for t in chunk_troughs]
-            troughs.extend(global_troughs)
+            global_peaks = [t + start_idx for t in chunk_peaks]
+            peaks.extend(global_peaks)
 
-        return sorted(troughs)
+        return sorted(peaks)
 
     def _annotate_heart_beats(self, section: pd.DataFrame, troughs: list(), section_id: int):
         """
