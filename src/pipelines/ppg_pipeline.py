@@ -20,9 +20,7 @@ class PPGPipeline:
     def run(self):
         
         sections = self._preprocess()
-        breakpoint()
         grouped_beats, all_beats = self._process_beats(sections)
-        breakpoint()
         data = self._basic_biomarkers(grouped_beats)
         sqi_results = self._basic_sqi(data)
         breakpoint()

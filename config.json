@@ -1,4 +1,5 @@
-{
+{   
+    "config_id": "dev001",
 	"outputs":{
         "print_verbosity": 2,
         "debug_plots": false
@@ -28,7 +29,7 @@
                 "checkpoint_id": 1,
                 "data_id": "corsano_test_app_a"
             },
-            "filename_format": "{checkpoint_id}_{data_id}.pkl - NOT IMPLEMENTED"
+            "filename_format": "{config_id}_{subject_id}_{condition_id}_{sensor}_{checkpoint_id}.pkl - NOT IMPLEMENTED"
         },
         "pipeline_ppg": {
             "load": {
@@ -43,7 +44,7 @@
                 "checkpoint_id": 2,
                 "data_id": "corsano_test_pipeline_ppg_a"
             },
-            "filename_format": "{checkpoint_id}_{data_id}.pkl - NOT IMPLEMENTED"
+            "filename_format": "{config_id}_{subject_id}_{condition_id}_{sensor}_{checkpoint_id}.pkl - NOT IMPLEMENTED"
         }
     },
     "filter": {

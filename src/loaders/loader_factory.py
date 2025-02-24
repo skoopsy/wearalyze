@@ -7,11 +7,11 @@ class DataLoaderFactory:
         device = config["data_source"]["device"]
 
         if device == 'polar-verity':
-            print("[DataLoaderFactory] PolarVerityLoader selected"]
+            print("[DataLoaderFactory] PolarVerityLoader selected")
             return PolarVerityLoader(config=config)
 
         elif device == 'corsano-2872b': 
-            print("[DataLoaderFactory] Corsano2872bLoader selected"]
+            print("[DataLoaderFactory] Corsano2872bLoader selected")
             return Corsano2872bLoader(config=config)
 
         else:

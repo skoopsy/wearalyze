@@ -29,7 +29,7 @@ class LoaderOrchestrator:
         data = {}
         for subject in subject_dirs:
             data[subject] = self.load_subject(subject)
-        
+                    
         return data
 
     def load_subject(self, subject):

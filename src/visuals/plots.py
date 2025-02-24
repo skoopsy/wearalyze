@@ -44,6 +44,13 @@ class Plots:
             plt.legend()
             plt.show()
 
+    def sensor_vs_time(device: str, subject: str, condition: str, sensor:str, column_name:str):
+        # Using data_model format
+        # Plots PPG vs timestamp_ms
+        plt.plot(data[subject][condition][sensor]["timestamps_ms"], data[subject][condition][sensor][column_name])
+        plt.title(f"{device} {sensor} vs time")
+        plt.show()
+
     def plot_detected_inflections(data, peaks, troughs):
         """
         Plot the original signal with detected peaks and troughs
