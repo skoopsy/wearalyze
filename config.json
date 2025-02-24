@@ -4,7 +4,7 @@
         "debug_plots": false
     },
     "data_source":{
-        "subjects_dir": "data/corsano/subject1/",
+        "subjects_dir": "data/corsano/",
         "multi_subjects": false,
         "subjects_to_load": ["all"],
         "multi_condition": {

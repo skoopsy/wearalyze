@@ -22,14 +22,12 @@ class LoaderOrchestrator:
         if "all" in self.subjects_to_load:
             subject_dirs = [d for d in os.listdir(self.subjects_dir)
                             if os.path.isdir(os.path.join(self.subjects_dir, d))]
-            breakpoint()
         else:
             subject_dirs = self.subjects_to_load
         
         # Create all subject data dict
         data = {}
         for subject in subject_dirs:
-            breakpoint()
             data[subject] = self.load_subject(subject)
         
         return data
@@ -38,13 +36,9 @@ class LoaderOrchestrator:
         """ Load a single subjects data """
         subject_path = os.path.join(self.subjects_dir, subject)
         subject_data = {}
-        if self.multi_condition_status:
-            for condition in self.conditions:
-                condition_path = os.path.join(subject_path, condition)
-                subject_data[condition] = self.load_condition(condition_path)
-        else:
-            # If no separate condition structure, treat the subjects folder as one condition
-            subject_data["single_condition"] = self.load_condition(subject_path)
+        for condition in self.conditions:
+            condition_path = os.path.join(subject_path, condition)
+            subject_data[condition] = self.load_condition(condition_path)
 
         return subject_data
 
