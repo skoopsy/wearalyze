@@ -98,7 +98,7 @@ class PPGPreProcessor:
         return resampled_sections 
              
 
-    def filter_cheby2(self, sections):
+    def filter_cheby2(self, sections, sample_freq):
         """
         Apply Chebyshev Type II filter to each section of input data
         
@@ -106,12 +106,11 @@ class PPGPreProcessor:
          1. appendeds a new column to the input dataframe inplace called filtered_value
          2. Returns a new dataframe with the filtered_values and timestamp on their own.
         """
-
-        sample_rate = self.config['filter']['sample_rate']
+           
         lowcut = self.config['filter']['lowcut']
         highcut = self.config['filter']['highcut']
         order = self.config['filter']['order']
-        nyquist = 0.5 * sample_rate
+        nyquist = 0.5 * sample_freq
 
         b, a = cheby2(order, 20, [lowcut / nyquist, highcut / nyquist], btype='band')
         filtered_sections = []

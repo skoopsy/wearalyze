@@ -23,8 +23,10 @@ class PPGPipeline:
         grouped_beats, all_beats = self._process_beats(sections)
         data = self._basic_biomarkers(grouped_beats)
         sqi_results = self._basic_sqi(data)
-        #Plots.all_deteted_toughs_and_peaks(data, 'filtered_value')
         data, beat_features = self._pulse_wave_features(data)
+        breakpoint() 
+        #Plots.all_deteted_toughs_and_peaks(data, 'filtered_value')
+        breakpoint()
         for i in range(1000,1100, 1):
             Plots.plot_beat_with_features_deriv(data, beat_features, i)
         breakpoint()
@@ -39,7 +41,8 @@ class PPGPipeline:
         resampled_sections = preprocessor.resample(sections=sections, 
                                                    resample_freq=self.CONF_preprocess.get("resample_freq"),
                                                    input_freq=sample_freq)
-        preprocessor.filter_cheby2(resampled_sections)
+        preprocessor.filter_cheby2(resampled_sections, self.CONF_preprocess.get("resample_freq"))
+
         return resampled_sections
     
     @with_checkpoint(checkpoint_id=2, stage_name="process_beats")
