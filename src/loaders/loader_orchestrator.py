@@ -22,12 +22,14 @@ class LoaderOrchestrator:
         if "all" in self.subjects_to_load:
             subject_dirs = [d for d in os.listdir(self.subjects_dir)
                             if os.path.isdir(os.path.join(self.subjects_dir, d))]
+            breakpoint()
         else:
             subject_dirs = self.subjects_to_load
         
         # Create all subject data dict
         data = {}
         for subject in subject_dirs:
+            breakpoint()
             data[subject] = self.load_subject(subject)
         
         return data

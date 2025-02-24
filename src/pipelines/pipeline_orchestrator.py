@@ -14,10 +14,10 @@ class PipelineOrchestrator:
             print(f"\n[PipelineOrchestrator] Processing subject: {subject.subject_id}")
             
             for condition_name, condition in subject.conditions.items():
-                print(f"    Processing condition: {condition_name}")
+                print(f"[PipelineOrchestrator] Processing condition: {condition_name}")
 
                 for sensor_type, sensor in condition.sensors.items():
-                    print(f"    Processing sensor: {sensor_type}")
+                    print(f"[PipelineOrchestrator] Processing sensor: {sensor_type}")
 
                 
                     pipeline = PipelineFactory.get_pipeline(sensor_type, 

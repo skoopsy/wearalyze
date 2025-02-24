@@ -4,7 +4,6 @@ from src.data_model.subject_factory import create_subjects_from_nested_dicts
 class AppState:
     """
     Encapsulates the full state of the application, incl raw and processed data.
-
     It handles loading from a checkpoint, initialising a fresh state if needed, 
     and saving the state
     """

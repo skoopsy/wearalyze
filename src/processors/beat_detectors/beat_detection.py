@@ -34,6 +34,7 @@ class HeartBeatDetector:
         all_beats = [] 
         
         for section_id, section in enumerate(sections):
+            # Processed per compliance dection
             section = section.reset_index(drop=True).copy()
             
             # Detect troughs (inverted signal as it will detect "peaks"    
@@ -42,7 +43,7 @@ class HeartBeatDetector:
             troughs = detector_results["peaks"]
 
             if self.verbosity > 1:
-                print(f"[HeartBeatDetector] Troughtd detected: {len(troughs)}")
+                print(f"[HeartBeatDetector] Troughs detected: {len(troughs)}")
             
             # Annotate the sections with info
             section = self._annotate_heart_beats(section, troughs, section_id)
@@ -103,3 +104,4 @@ class HeartBeatDetector:
 
         return section
 
+    
