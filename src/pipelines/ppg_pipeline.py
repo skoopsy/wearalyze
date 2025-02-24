@@ -14,6 +14,7 @@ class PPGPipeline:
     def __init__(self, sensor, config):
         self.sensor = sensor
         self.config = config
+        self.CONF_preprocess = config["ppg_preprocessing"]
         self.checkpoint = CheckpointManager(config=config['checkpoint']['pipeline_ppg'])
 
     def run(self):
@@ -36,8 +37,10 @@ class PPGPipeline:
         print("[PPGPipeline] Preprocessing PPG data.")
         preprocessor = PPGPreProcessor(self.sensor.data, self.config)
         sections = preprocessor.create_compliance_sections()
-        resample_freq, _, _ = preprocessor.compute_sample_freq(sections)
-        resampled_sections = preprocessor.resample(sections, resample_freq)
+        sample_freq, _, _ = preprocessor.compute_sample_freq(sections)
+        resampled_sections = preprocessor.resample(sections=sections, 
+                                                   resample_freq=self.CONF_preprocess.get("resample_freq"),
+                                                   input_freq=sample_freq)
         preprocessor.filter_cheby2(resampled_sections)
          
         return resampled_sections

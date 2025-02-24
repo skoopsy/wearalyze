@@ -25,6 +25,8 @@ class PPGPreProcessor:
         """
         Computess the sampling frequency of input data
 
+        Note: there is downsmapling, but better to use resample()
+
         Args:
             sections (list of pd.DataFrame): sections of data thresholded for
                  compliance (may mitigate dynamic sampling issues)
@@ -56,15 +58,15 @@ class PPGPreProcessor:
             
         interval_str = f'{int(interval_ms)}ms'
         
-        print(f'Detected measured sample frequency: {final_freq} Hz')
-        print(f'{interval_str}')
+        print(f'[PPGPreProcessor] Sensor sample frequency (Raw): {final_freq} Hz')
+        print(f'[PPGPreProcessor] Sensor sample period (Raw): {interval_str}')
 
         return final_freq, interval_ms, interval_str
 
    
-    def resample(self, sections: pd.DataFrame, resample_freq):
+    def resample(self, sections: pd.DataFrame, resample_freq, input_freq):
         """
-        Resample time series data
+        Resample time series data properly!
         """
         resampled_sections = []
 
@@ -90,6 +92,8 @@ class PPGPreProcessor:
             })
             
             resampled_sections.append(section_resampled)
+            
+        print(f"[PPGPreProcessor] Sensor resampled from {input_freq} Hz to {resample_freq} Hz")
 
         return resampled_sections 
              

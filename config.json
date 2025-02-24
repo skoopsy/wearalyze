@@ -55,7 +55,8 @@
     },
     "ppg_preprocessing": {
         "threshold": 10000,
-        "min_duration": 100
+        "min_duration": 100,
+        "resample_freq": 100
     },
     "ppg_processing": {
         "beat_detector": "ampd",
