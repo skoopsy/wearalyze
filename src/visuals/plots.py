@@ -220,7 +220,8 @@ class Plots:
         features = beat_features[beat_features['global_beat_index'] == global_beat_index]
 
         if features.empty:
-            raise ValueError(f"No features found for global_beat_index {global_beat_index}.")
+            print(f"No features found for global_beat_index {global_beat_index}.")
+            return
 
         # Extract key features
         def extract_feature(features, outer_key, inner_key, default=None):
