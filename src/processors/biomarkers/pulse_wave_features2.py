@@ -118,11 +118,13 @@ class PulseWaveFeatures:
             """
             
             # Collect in beat_features dict
-            beat_features.update(y_features)
-            beat_features.update(dydx_features)
-            beat_features.update(d2ydx2_features)
-            #beat_features.update(d3ydx3_features)
-
+            try:
+                beat_features.update(y_features)
+                beat_features.update(dydx_features)
+                beat_features.update(d2ydx2_features)
+                #beat_features.update(d3ydx3_features)
+            except TypeError:
+                continue
             # Add beat features as row in beats_features            
             all_beats_features.append(beat_features)
 
@@ -175,11 +177,12 @@ class PulseWaveFeatures:
         Returns:    
             dict: {'dydx':{...}} with dydx features.
         """
-        features_dict = {}
+        features_dict = {'detected': True}
         
         if len(beat) < 2:
             # Not enough points for useful derivative
             features_dict.update({
+                'detected': False,
                 'ms': None,
                 'systole': {'detected': False},
                 'diastole': {'detected': False}
@@ -187,24 +190,33 @@ class PulseWaveFeatures:
             return {'dydx': features_dict}
 
         # Feature: ms - Max upslope of systole index
+       
         try:
-            ms_idx_global = beat['sig_1deriv'].idxmax()
-            ms_idx_local = np.nanargmax(beat['sig_1deriv'].values)
-            features_dict['ms'] = ms_idx_local
-        except ValueError:
+            if sum(beat['sig_1deriv'].isna()) > 0.5*len(beat['sig_1deriv']):
+                features_dict['detected'] = False
+                ms_idx_global = None
+                ms_idx_local = None
+                features_dict['ms'] = None
+            else:
+                ms_idx_global = beat['sig_1deriv'].idxmax()
+                ms_idx_local = np.nanargmax(beat['sig_1deriv'].values)
+                features_dict['ms'] = ms_idx_local
+        except ValueError or TypeError:
             # if values are NaN
+            features_dict['detected'] = False
             ms_idx_global = None
             ms_idx_local = None
             features_dict['ms'] = None
 
-        # Compute zero-crossing points in dydx
-        zero_cross = self._compute_zero_crossings_dict(
-            beat, sig_name='sig_1deriv', crossing_type="pos2neg"
-        )
-        features_dict['zero_crossings'] = zero_cross
+        if ms_idx_local is not None:
+            # Compute zero-crossing points in dydx
+            zero_cross = self._compute_zero_crossings_dict(
+                beat, sig_name='sig_1deriv', crossing_type="pos2neg"
+            )
+            features_dict['zero_crossings'] = zero_cross
 
         # Feature: Systole - 1st p2n zero-crossing after ms
-        if zero_cross['sum'] > 0 and ms_idx_local is not None:
+        if ms_idx_local is not None and zero_cross['sum'] > 0: 
             zc_after_ms = [zc for zc in zero_cross['idxs'] if zc > ms_idx_local]
             if len(zc_after_ms) > 0:
                 first_zc_idx_local = zc_after_ms[0]
@@ -222,7 +234,7 @@ class PulseWaveFeatures:
             features_dict['systole'] = {'detected': False}
 
         # Feature: Diastole - 2nd p2n zero-crossing after ms
-        if zero_cross['sum'] > 1 and ms_idx_local is not None:
+        if ms_idx_local is not None and zero_cross['sum'] > 1:
             zc_after_ms = [zc for zc in zero_cross['idxs'] if zc > ms_idx_local]
             if len(zc_after_ms) >= 2:
                 second_zc_idx_local = zc_after_ms[1]
@@ -255,7 +267,11 @@ class PulseWaveFeatures:
         a, b, c, d, e, & f waves. This uses fiducials from features calculated 
         from running compute_features_dydx() such as ms_idx.
         """
-        features_dict = {}
+        features_dict = {'detected': True}
+
+        if features_dydx['dydx']['ms'] is None:
+            features_dict['detected'] = False
+            return
 
         # Get ms_idx from dydx features
         ms_idx_local = features_dydx['dydx'].get('ms', None)
@@ -334,7 +350,7 @@ class PulseWaveFeatures:
 
 
     def compute_features_d3ydx3(self, beat: pd.DataFrame) -> dict:
-        
+         
         features_dict = {}
         
          #TODO modify compute_zero_cross to label p2n and n2p in both method.

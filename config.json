@@ -33,13 +33,13 @@
         },
         "pipeline_ppg": {
             "load": {
-                "status": false,
+                "status": true,
                 "directory": "data/checkpoints/pipeline_ppg/",
                 "checkpoint_id": 2,
                 "data_id": "corsano_test_pipeline_ppg_a"
             },
             "save": {
-                "status": true,
+                "status": false,
                 "directory": "data/checkpoints/pipeline_ppg/",
                 "checkpoint_id": 2,
                 "data_id": "corsano_test_pipeline_ppg_a"

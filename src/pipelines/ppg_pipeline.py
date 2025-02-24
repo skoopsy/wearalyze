@@ -40,7 +40,6 @@ class PPGPipeline:
                                                    resample_freq=self.CONF_preprocess.get("resample_freq"),
                                                    input_freq=sample_freq)
         preprocessor.filter_cheby2(resampled_sections)
-        breakpoint() 
         return resampled_sections
     
     @with_checkpoint(checkpoint_id=2, stage_name="process_beats")

@@ -253,7 +253,7 @@ class Plots:
 
         dydx_ms_idx = extract_feature(features, 'dydx', 'ms')
         
-        if extract_features(features, 'dydx', 'systole')['detected']:
+        if extract_feature(features, 'dydx', 'systole')['detected']:
             dydx_systole_idx = extract_feature(features,'dydx', 'systole')['idx_local']
         else:
             dydx_systole_idx=0
