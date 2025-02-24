@@ -14,7 +14,7 @@ class HeartBeatDetector:
     
     def process_sections(self, sections: list()):
         """
-        Main processing methods to detect and and mark heart (quasi-periodic)
+        Main processing methods to detect and mark heart (quasi-periodic)
         beats
         
         Args:
@@ -42,7 +42,7 @@ class HeartBeatDetector:
             troughs = detector_results["peaks"]
 
             if self.verbosity > 1:
-                print(f"Troughtd detected: {len(troughs)}")
+                print(f"[HeartBeatDetector] Troughtd detected: {len(troughs)}")
             
             # Annotate the sections with info
             section = self._annotate_heart_beats(section, troughs, section_id)
@@ -58,7 +58,7 @@ class HeartBeatDetector:
             all_beats.extend(segmented_beats)
 
             if self.verbosity >= 1:
-                print(f"Processed section {section_id+1} / {len(sections)}")
+                print(f"[HeartBeatDetector] Processed section {section_id+1} / {len(sections)}")
         
         combined_sections = pd.concat(annotated_sections, ignore_index=True)
     
@@ -99,7 +99,7 @@ class HeartBeatDetector:
             section.loc[peak_idx, 'is_beat_peak'] = True
 
         if self.verbosity > 1:
-            print(f"Unique beats found: {section.beat.nunique()}")
+            print(f"[HeartBeatDetector] Unique beats found: {section.beat.nunique()}")
 
         return section
 

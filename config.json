@@ -17,13 +17,13 @@
     "checkpoint":{
         "app_state": {
             "load": {
-                "status": false,
+                "status": true,
                 "directory": "data/checkpoints/app_state/",
                 "checkpoint_id": 1,
                 "data_id": "corsano_test_app_a"
             },
             "save": {
-                "status": true,
+                "status": false,
                 "directory": "data/checkpoints/app_state/",
                 "checkpoint_id": 1,
                 "data_id": "corsano_test_app_a"
