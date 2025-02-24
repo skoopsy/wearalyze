@@ -125,6 +125,7 @@ class PulseWaveFeatures:
                 #beat_features.update(d3ydx3_features)
             except TypeError:
                 continue
+
             # Add beat features as row in beats_features            
             all_beats_features.append(beat_features)
 
@@ -189,8 +190,7 @@ class PulseWaveFeatures:
             })
             return {'dydx': features_dict}
 
-        # Feature: ms - Max upslope of systole index
-       
+        # Feature: ms - Max upslope of systole index       
         try:
             if sum(beat['sig_1deriv'].isna()) > 0.5*len(beat['sig_1deriv']):
                 features_dict['detected'] = False
