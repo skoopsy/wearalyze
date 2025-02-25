@@ -6,8 +6,8 @@
     },
     "data_source":{
         "subjects_dir": "data/polar/simpreg1/",
-        "multi_subjects": false,
-        "subjects_to_load": ["SIM007-partial"],
+        "multi_subjects": true,
+        "subjects_to_load": ["SIM007-partial","SIM008-partial"],
         "multi_condition": {
             "status": false,
             "conditions": ["cond"]
@@ -21,13 +21,13 @@
                 "status": false,
                 "directory": "data/checkpoints/app_state/",
                 "checkpoint_id": 1,
-                "data_id": "polar_simpreg1_rosetrees_sim007_x"
+                "data_id": "polar_simpreg1_rosetrees_sim008_x"
             },
             "save": {
                 "status": true,
                 "directory": "data/checkpoints/app_state/",
                 "checkpoint_id": 1,
-                "data_id": "polar_simpreg1_rosetrees_sim007_x"
+                "data_id": "polar_simpreg1_rosetrees_sim7-8_x"
             },
             "filename_format": "{config_id}_{subject_id}_{condition_id}_{sensor}_{checkpoint_id}.pkl - NOT IMPLEMENTED"
         },
@@ -36,13 +36,13 @@
                 "status": false,
                 "directory": "data/checkpoints/pipeline_ppg/",
                 "checkpoint_id": 2,
-                "data_id": "polar_simpreg1_rosetrees_sim007_x"
+                "data_id": "polar_simpreg1_rosetrees_sim008_x"
             },
             "save": {
                 "status": true,
                 "directory": "data/checkpoints/pipeline_ppg/",
                 "checkpoint_id": 2,
-                "data_id": "polar_simpreg1_rosetrees_sim007_x"
+                "data_id": "polar_simpreg1_rosetrees_sim7-8_x"
             },
             "filename_format": "{config_id}_{subject_id}_{condition_id}_{sensor}_{checkpoint_id}.pkl - NOT IMPLEMENTED"
         }

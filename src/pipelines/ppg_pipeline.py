@@ -24,12 +24,12 @@ class PPGPipeline:
         data = self._basic_biomarkers(grouped_beats)
         sqi_results = self._basic_sqi(data)
         data, beat_features = self._pulse_wave_features(data)
-        breakpoint() 
+        #breakpoint() 
         #Plots.all_deteted_toughs_and_peaks(data, 'filtered_value')
-        breakpoint()
-        for i in range(1000,1100, 1):
-            Plots.plot_beat_with_features_deriv(data, beat_features, i)
-        breakpoint()
+        #breakpoint()
+        #for i in range(1000,1100, 1):
+        #    Plots.plot_beat_with_features_deriv(data, beat_features, i)
+        #breakpoint()
              
         return data, beat_features
 

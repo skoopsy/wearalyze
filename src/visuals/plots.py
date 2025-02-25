@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import numpy as np
 
 class Plots:
     def __init__(self):
@@ -49,6 +50,13 @@ class Plots:
         # Plots PPG vs timestamp_ms
         plt.plot(data[subject][condition][sensor]["timestamps_ms"], data[subject][condition][sensor][column_name])
         plt.title(f"{device} {sensor} vs time")
+        plt.show()
+
+    def sensor_vs_time2(subject, data):
+        plt.plot(data['filtered_value'], data['timestamp_ms'], linewidth=10)
+        plt.title(f"PPG Intensity vs Time - Subject: {subject}")
+        plt.xlabel("Time (ms)")
+        plt.ylabel("PPG Intensity (A.U.)")
         plt.show()
 
     def plot_detected_inflections(data, peaks, troughs):
@@ -353,4 +361,61 @@ class Plots:
             ax.legend()
         fig.suptitle(f"Beat: {global_beat_index}")
         plt.tight_layout()
+        plt.show()
+
+    def app(sections, subject):
+        plt.rcParams.update({
+            "font.size": 12,           # Base font size
+            "font.weight": "bold",     # Bold fonts
+            "axes.labelsize": 14,      # Axis label font size
+            "axes.labelweight": "bold",
+            "axes.linewidth": 1.5,     # Thicker axis lines
+            "xtick.labelsize": 12,     # X tick label font size
+            "ytick.labelsize": 12,
+            "figure.dpi": 150,         # Increase figure DPI for better clarity
+        })
+        x = sections[0]['timestamp_ms']
+        y = sections[0]['filtered_value']
+
+        fig, ax = plt.subplots(figsize=(7, 5))  # A smaller figure size
+
+        # Plot the data
+        ax.plot(x, y, color='red', linewidth=2)
+
+        # Keep the y-axis label but remove its tick marks and labels:
+        ax.set_ylabel("PPG Intensity (A.u.)")            # Keep the label
+        ax.set_yticks([])                     # Remove the y-axis ticks
+        ax.tick_params(axis='y', which='both', direction="in",
+                       length=0, labelleft=False)  # Hide tick lines and labels
+
+        # Limit the number of x-axis ticks for a cleaner look
+        # One way is to specify the tick positions manually:
+        #ax.set_xticks([0, 5, 10])
+        # Alternatively, you can use a locator:
+        # from matplotlib.ticker import MaxNLocator
+        # ax.xaxis.set_major_locator(MaxNLocator(nbins=3))
+
+        ax.set_xlabel("Time (ms)")
+        
+        ax.tick_params(
+            axis='x',
+            which='both',
+            direction='in',  # Ticks go into the plot
+            length=5,        # Tick length (adjust as needed)
+            width=1.5,       # Tick width
+            bottom=True,     # Draw ticks at bottom
+            top=True        # We are hiding the top spine, so no top ticks
+        )
+        # Make the top and right spines invisible (common in scientific publications)
+        #ax.spines['top'].set_visible(False)
+        #ax.spines['right'].set_visible(False)
+
+        # For consistency, you could also hide the bottom or left spines if desired:
+        # ax.spines['bottom'].set_linewidth(1.5)
+        # ax.spines['left'].set_linewidth(1.5)
+
+        # Adjust subplot layout to reduce extra whitespace
+        #plt.tight_layout()
+        ax.set_title(f"PPG - 5 Pulses - Subject {subject}", fontweight='bold')
+
         plt.show()
