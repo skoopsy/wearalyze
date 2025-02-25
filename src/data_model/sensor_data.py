@@ -20,5 +20,11 @@ class SensorData:
     def get_condition():
         return self.condition
 
+    def add_processed_data(self, pdata):
+        self.processed_data = pdata
+
+    def add_beat_features(self, bfeat):
+        self.beat_features = bfeat
+
     def __repr__(self) -> str:
         return f"SensorData(sensor_type={self.sensor_type}, rows={len(self.data)})"

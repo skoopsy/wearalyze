@@ -7,7 +7,7 @@
     "data_source":{
         "subjects_dir": "data/polar/simpreg1/",
         "multi_subjects": true,
-        "subjects_to_load": ["SIM007-partial","SIM008-partial"],
+        "subjects_to_load": ["SIM007-partial","SIM008-partial", "SIM009-partial", "SIM010-partial", "SIM011-partial"],
         "multi_condition": {
             "status": false,
             "conditions": ["cond"]

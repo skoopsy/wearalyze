@@ -24,7 +24,11 @@ class PipelineOrchestrator:
                                                             sensor, 
                                                             self.config
                     )
-                    pipeline.run()
+                    #TODO: Needs to be sensor agnostic
+                    data, beat_features = pipeline.run()
+                    sensor.add_processed_data(data)
+                    sensor.add_beat_features(beat_features)
+                    
                     # Add try except back in
                     try:
                         a = None
