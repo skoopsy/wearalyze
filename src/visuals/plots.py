@@ -364,35 +364,38 @@ class Plots:
         plt.tight_layout()
         plt.show()
 
-    def app(sections, subject):
+    def filtered_ppg_vs_time_bold(sections, subject):
+        """ 
+        Plots filtered PPG vs time in a nice and bold, presentable format.
+        """
+        # Formatting
         plt.rcParams.update({
-            "font.size": 12,           # Base font size
-            "font.weight": "bold",     # Bold fonts
-            "axes.labelsize": 14,      # Axis label font size
+            "font.size": 12,
+            "font.weight": "bold",
+            "axes.labelsize": 14,
             "axes.labelweight": "bold",
-            "axes.linewidth": 1.5,     # Thicker axis lines
-            "xtick.labelsize": 12,     # X tick label font size
+            "axes.linewidth": 1.5,    
+            "xtick.labelsize": 12,     
             "ytick.labelsize": 12,
-            "figure.dpi": 150,         # Increase figure DPI for better clarity
+            "figure.dpi": 150,
         })
         x = sections[0]['timestamp_ms']
         y = sections[0]['filtered_value']
 
-        fig, ax = plt.subplots(figsize=(7, 5))  # A smaller figure size
+        fig, ax = plt.subplots(figsize=(7, 5)) 
 
-        # Plot the data
+        # Plot
         ax.plot(x, y, color='red', linewidth=2)
 
-        # Keep the y-axis label but remove its tick marks and labels:
-        ax.set_ylabel("PPG Intensity (A.u.)")            # Keep the label
-        ax.set_yticks([])                     # Remove the y-axis ticks
+        # Keep y-axis label -  Remove tick marks/labels:
+        ax.set_ylabel("PPG Intensity (A.u.)")
+        ax.set_yticks([])
         ax.tick_params(axis='y', which='both', direction="in",
-                       length=0, labelleft=False)  # Hide tick lines and labels
+                       length=0, labelleft=False)
 
-        # Limit the number of x-axis ticks for a cleaner look
-        # One way is to specify the tick positions manually:
+        # Manual x ticks:
         #ax.set_xticks([0, 5, 10])
-        # Alternatively, you can use a locator:
+        # Can try a locator:
         # from matplotlib.ticker import MaxNLocator
         # ax.xaxis.set_major_locator(MaxNLocator(nbins=3))
 
@@ -402,36 +405,21 @@ class Plots:
             axis='x',
             which='both',
             direction='in',  # Ticks go into the plot
-            length=5,        # Tick length (adjust as needed)
-            width=1.5,       # Tick width
-            bottom=True,     # Draw ticks at bottom
-            top=True        # We are hiding the top spine, so no top ticks
+            length=5,
+            width=1.5,
+            bottom=True,
+            top=True
         )
-        # Make the top and right spines invisible (common in scientific publications)
-        #ax.spines['top'].set_visible(False)
-        #ax.spines['right'].set_visible(False)
-
-        # For consistency, you could also hide the bottom or left spines if desired:
-        # ax.spines['bottom'].set_linewidth(1.5)
-        # ax.spines['left'].set_linewidth(1.5)
-
-        # Adjust subplot layout to reduce extra whitespace
-        #plt.tight_layout()
         ax.set_title(f"PPG - 5 Pulses - Subject {subject}", fontweight='bold')
 
         plt.show()
 
-
-    def plot_five_offset_signals(subjects):
+    def five_sig_one_plot_incl_sliders(subjects):
         """
-        Assumes:
-          - subjects is a list of at least 5 Subject objects
-          - each subject has a single condition named 'cond'
-          - each condition has a 'ppg' SensorData object
-          - that SensorData has a 'processed_data' DataFrame with 'timestamp_ms' and 'filtered_value'
+        Plots 5 subjects' PPG data so you can interactively shift each trace 
+        in time (x-axis) and vertical offset (y-axis) for comparison.
         """
 
-        # Configure some style defaults
         plt.rcParams.update({
             "font.size": 12,
             "font.weight": "bold",
@@ -441,174 +429,124 @@ class Plots:
             "figure.dpi": 150,
         })
 
-        fig, ax = plt.subplots(figsize=(7, 5))
-
-        # Decide on colors and a consistent vertical offset
-        colors = ["red", "blue", "green", "orange", "purple"]
-        vertical_offset = 2000  # Adjust as needed for clarity
-        
-        for i in range(5):
-            subj = subjects[i]
-            
-            # Extract your x/y data
-            sensor_df = subj.conditions['cond'].sensors['ppg'].processed_data
-            x = sensor_df['timestamp_ms']
-            y = sensor_df['filtered_value']
-            
-            # Add an offset that grows with each subject index
-            offset_y = y + i * vertical_offset
-            
-            # Plot with a label that includes the subject ID
-            ax.plot(
-                x, offset_y, 
-                label=f"{subj.subject_id}",   # or something else like "PPG run i"
-                color=colors[i % len(colors)], 
-                linewidth=2
-            )
-
-        # Label axes
-        ax.set_xlabel("Time (ms)")
-        ax.set_ylabel("PPG Intensity (A.u.) + offset")
-        
-        # Show a legend with subject IDs
-        ax.legend(title="Subjects")
-        
-        # Optional grid & title
-        ax.grid(True, which="both", linestyle="--", alpha=0.6)
-        ax.set_title("PPG Signals for 5 Subjects (Offset)", fontweight="bold")
-
-        #plt.tight_layout()
-        plt.show()
-
-
-    def plot_five_signals_zero_start(subjects):
-        """
-        Plots the first 5 subjects' PPG data so that:
-          - each subject's time starts at 0 (by subtracting min timestamp).
-          - each subject's signal is offset vertically to avoid overlap.
-        """
-        plt.rcParams.update({
-            "font.size": 12,
-            "font.weight": "bold",
-            "axes.labelsize": 14,
-            "axes.labelweight": "bold",
-            "axes.linewidth": 1.5,
-            "figure.dpi": 150,
-        })
-
-        fig, ax = plt.subplots(figsize=(7, 5))
-
-        colors = ["red", "blue", "green", "orange", "purple"]
-        vertical_offset = 1000  # Adjust based on your data scale
-
-        for i in range(5):
-            subj = subjects[i]
-            sensor_df = subj.conditions['cond'].sensors['ppg'].processed_data
-
-            # Force all to start at 0 by subtracting the first timestamp
-            original_t = sensor_df['timestamp_ms'].to_numpy()
-            x = original_t - original_t[0]
-
-            # Optionally offset each subject's y-values
-            y = sensor_df['filtered_value'].to_numpy() + i * vertical_offset
-
-            ax.plot(
-                x, y,
-                label=f"{subj.subject_id}",
-                color=colors[i % len(colors)],
-                linewidth=2
-            )
-
-        ax.set_xlabel("Time offset (ms)")
-        ax.set_ylabel("PPG Intensity (A.u.) + vertical offset")
-        ax.legend(title="Subjects")
-
-        ax.grid(True, which="both", linestyle="--", alpha=0.6)
-        ax.set_title("PPG Signals (Aligned at t=0 & Offset)", fontweight="bold")
-
-        plt.tight_layout()
-        plt.show()
-
-
-    def plot_signals_with_time_shift_sliders(subjects):
-        """
-        Plots the first 5 subjects' PPG data so you can interactively shift
-        each trace in time. Each slider adjusts the time offset of one trace.
-        """
-        plt.rcParams.update({
-            "font.size": 12,
-            "font.weight": "bold",
-            "axes.labelsize": 14,
-            "axes.labelweight": "bold",
-            "axes.linewidth": 1.5,
-            "figure.dpi": 150,
-        })
-
-        # Prepare figure and adjust space at bottom for sliders
         fig, ax = plt.subplots(figsize=(8, 6))
-        plt.subplots_adjust(bottom=0.3)  # Leaves room for multiple sliders
+        plt.subplots_adjust(bottom=0.45)  # Extra space for 10 sliders (5 time + 5 y)
 
-        colors = ["red", "blue", "green", "orange", "purple"]
-        vertical_offset = 1000
-
-        # We'll store the line artists, plus the original x- and y-data for each subject
         lines = []
-        data_list = []  # hold (xarray, yarray) for each subject
+        data_list = []
+
+        # Each subject trace gets a base vertical offset to help separate them
+        base_vertical_offset = 2000
 
         for i in range(5):
             subj = subjects[i]
             sensor_df = subj.conditions['cond'].sensors['ppg'].processed_data
-            t_original = sensor_df['timestamp_ms'].to_numpy()
-            # Start near zero
-            x = t_original - t_original[0]
-            y = sensor_df['filtered_value'].to_numpy() + i*vertical_offset
 
-            (line,) = ax.plot(
-                x, y, 
-                color=colors[i],
+            # Subtract the first timestamp so all sigs start ~0
+            t_original = sensor_df['timestamp_ms'].to_numpy()
+            x0 = t_original - t_original[0]
+
+            y0 = sensor_df['filtered_value'].to_numpy()
+            # Add an initial offset to separate each subject
+            initial_offset = base_vertical_offset * i
+
+            line, = ax.plot(
+                x0,
+                y0 + initial_offset,
                 linewidth=2,
                 label=f"{subj.subject_id}"
             )
+
             lines.append(line)
-            data_list.append((x, y))
+            # Keep the original x,y plus the base offset
+            data_list.append((x0, y0, initial_offset))
 
-        ax.set_xlabel("Time (ms) [adjusted by slider]")
-        ax.set_ylabel("PPG Intensity (A.u.) + offset")
-        ax.legend()
-        ax.grid(True, which="both", linestyle="--", alpha=0.6)
-        ax.set_title("Interactive Time-Shift of 5 PPG Traces", fontweight="bold")
+        ax.set_xlabel("Time (ms)")
+        ax.set_ylabel("PPG Intensity (A.u.)")
+        ax.set_title("PPG Pluses per Subject", fontweight="bold")
 
-        # Create a separate slider axis for each of the 5 subjects
-        # We'll stack them vertically below the main plot
-        sliders = []
-        slider_axes = []
+        # Legend format/loc
+        ax.legend(
+            loc='upper left',
+            bbox_to_anchor=(1.01, 1.0),
+            borderaxespad=0.
+        )
+
+        # Hide y-axis ticks/labels but keep y label
+        ax.tick_params(axis='y', which='both', left=False, labelleft=False)
+
+        # Make room for 10 sliders: 5 for time, 5 for y offset
+        slider_height = 0.02
+        slider_axes_x = []
+        slider_axes_y = []
+
         for i in range(5):
-            # y-position for each new slider is (0.2 - i * slider_height)
-            slider_height = 0.03
-            ax_slider = plt.axes([0.15, 0.18 - i*(slider_height + 0.01), 0.7, slider_height])
-            # For demonstration, allow shifting up to +/- 3000 ms
-            slider = Slider(
-                ax_slider, 
-                f"Shift {i}", 
-                valmin=-3000, 
-                valmax=3000, 
-                valinit=0,   # Start with no shift
-                valstep=100  # Step by 100ms increments
-            )
-            sliders.append(slider)
+            # Stack them vertically, so shift downward for each subject
+            y_position = 0.25 - i * (slider_height + 0.01)
 
-        # Define an update function that re-draws the lines when a slider changes
+            # Time slider - left column
+            ax_slider_time = plt.axes([0.1,  y_position, 0.35, slider_height])
+            # Y offset slider - right column
+            ax_slider_vert = plt.axes([0.55, y_position, 0.35, slider_height])
+
+            slider_axes_x.append(ax_slider_time)
+            slider_axes_y.append(ax_slider_vert)
+
+        # Create Sliders with expanded ranges
+        sliders_time = []
+        sliders_y = []
+        for i in range(5):
+            s_time = Slider(
+                slider_axes_x[i],
+                f"Time {i}",
+                valmin=-200000,
+                valmax=200000,
+                valinit=0,
+                valstep=200
+            )
+            s_vert = Slider(
+                slider_axes_y[i],
+                f"Yoff {i}",
+                valmin=-50000,
+                valmax=50000,
+                valinit=0,
+                valstep=200
+            )
+            sliders_time.append(s_time)
+            sliders_y.append(s_vert)
+
         def update(val):
-            for i, slider in enumerate(sliders):
-                shift_value = slider.val
-                x_original, y_original = data_list[i]
-                # Just add the slider shift to the x-values
-                lines[i].set_xdata(x_original + shift_value)
+            """
+            Called whenever a slider moves.
+            For each subject i:
+              - read time shift
+              - read y shift
+              - apply them to the original x,y
+              - omit negative time data
+              - update line
+            """
+            for i in range(5):
+                x0, y0, base_offset = data_list[i]
+                shift_x = sliders_time[i].val
+                shift_y = sliders_y[i].val
+
+                x_new = x0 + shift_x
+                y_new = y0 + base_offset + shift_y
+
+                # Remove negative times- super hacky
+                mask = x_new >= 0
+                x_plot = x_new[mask]
+                y_plot = y_new[mask]
+
+                lines[i].set_xdata(x_plot)
+                lines[i].set_ydata(y_plot)
 
             fig.canvas.draw_idle()
 
-        # Register the update function with each slider
-        for s in sliders:
+        # Attach the update callback to all sliders
+        for s in sliders_time + sliders_y:
             s.on_changed(update)
 
         plt.show()
+
+
