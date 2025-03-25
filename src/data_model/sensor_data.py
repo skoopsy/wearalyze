@@ -7,6 +7,8 @@ class SensorData:
         self.data = data
         self.subject = subject
         self.condition = condition
+        self.processed_data = None
+        self.beat_features = None
     
     def get_data(self) -> pd.DataFrame:
         """
