@@ -14,6 +14,7 @@ class PPGPipeline:
     def __init__(self, sensor, config):
         self.sensor = sensor
         self.config = config
+        self.CONF_preprocess = config["ppg_preprocessing"]
         self.checkpoint = CheckpointManager(config=config['checkpoint']['pipeline_ppg'])
 
     def run(self):
@@ -22,19 +23,26 @@ class PPGPipeline:
         grouped_beats, all_beats = self._process_beats(sections)
         data = self._basic_biomarkers(grouped_beats)
         sqi_results = self._basic_sqi(data)
-        breakpoint()
         data, beat_features = self._pulse_wave_features(data)
-
+        #breakpoint() 
+        #Plots.all_deteted_toughs_and_peaks(data, 'filtered_value')
+        #breakpoint()
+        #for i in range(1000,1100, 1):
+        #    Plots.plot_beat_with_features_deriv(data, beat_features, i)
+        #breakpoint()
+             
         return data, beat_features
 
     def _preprocess(self):
         print("[PPGPipeline] Preprocessing PPG data.")
         preprocessor = PPGPreProcessor(self.sensor.data, self.config)
         sections = preprocessor.create_compliance_sections()
-        resample_freq, _, _ = preprocessor.compute_sample_freq(sections)
-        resampled_sections = preprocessor.resample(sections, resample_freq)
-        preprocessor.filter_cheby2(resampled_sections)
-        
+        sample_freq, _, _ = preprocessor.compute_sample_freq(sections)
+        resampled_sections = preprocessor.resample(sections=sections, 
+                                                   resample_freq=self.CONF_preprocess.get("resample_freq"),
+                                                   input_freq=sample_freq)
+        preprocessor.filter_cheby2(resampled_sections, self.CONF_preprocess.get("resample_freq"))
+
         return resampled_sections
     
     @with_checkpoint(checkpoint_id=2, stage_name="process_beats")

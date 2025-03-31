@@ -1,4 +1,6 @@
 import matplotlib.pyplot as plt
+from matplotlib.widgets import Slider
+import numpy as np
 
 class Plots:
     def __init__(self):
@@ -43,6 +45,20 @@ class Plots:
             plt.title(f'Section {i+1}')
             plt.legend()
             plt.show()
+
+    def sensor_vs_time(device: str, subject: str, condition: str, sensor:str, column_name:str):
+        # Using data_model format
+        # Plots PPG vs timestamp_ms
+        plt.plot(data[subject][condition][sensor]["timestamps_ms"], data[subject][condition][sensor][column_name])
+        plt.title(f"{device} {sensor} vs time")
+        plt.show()
+
+    def sensor_vs_time2(subject, data):
+        plt.plot(data['filtered_value'], data['timestamp_ms'], linewidth=10)
+        plt.title(f"PPG Intensity vs Time - Subject: {subject}")
+        plt.xlabel("Time (ms)")
+        plt.ylabel("PPG Intensity (A.U.)")
+        plt.show()
 
     def plot_detected_inflections(data, peaks, troughs):
         """
@@ -213,7 +229,8 @@ class Plots:
         features = beat_features[beat_features['global_beat_index'] == global_beat_index]
 
         if features.empty:
-            raise ValueError(f"No features found for global_beat_index {global_beat_index}.")
+            print(f"No features found for global_beat_index {global_beat_index}.")
+            return
 
         # Extract key features
         def extract_feature(features, outer_key, inner_key, default=None):
@@ -240,19 +257,27 @@ class Plots:
             return value.get(inner_key, default)
         
         # unpack features 
-        y_systole_idx = extract_feature(features,'y', 'systole')['idx']
+        y_systole_idx = extract_feature(features,'y', 'systole')['idx_local']
         y_systole_time = extract_feature(features,'y', 'systole')['time']
         y_diastole_idx = None
 
         dydx_ms_idx = extract_feature(features, 'dydx', 'ms')
-        dydx_systole_idx = extract_feature(features,'dydx', 'systole')['idx']
-        dydx_diastole_idx = extract_feature(features,'dydx', 'diastole')['idx']
+        
+        if extract_feature(features, 'dydx', 'systole')['detected']:
+            dydx_systole_idx = extract_feature(features,'dydx', 'systole')['idx_local']
+        else:
+            dydx_systole_idx=0
 
-        a_wave_idx = extract_feature(features, 'd2ydx2', 'a_wave')['idx']
-        b_wave_idx = extract_feature(features, 'd2ydx2', 'b_wave')['idx']
-        c_wave_idx = extract_feature(features, 'd2ydx2', 'c_wave')['idx']
-        d_wave_idx = extract_feature(features, 'd2ydx2', 'd_wave')['idx']
-        e_wave_idx = extract_feature(features, 'd2ydx2', 'e_wave')['idx']
+        if extract_feature(features, 'dydx', 'diastole')['detected']:
+            dydx_diastole_idx = extract_feature(features,'dydx', 'diastole')['idx_local']
+        else:
+            dydx_diastole_idx = 0
+
+        a_wave_idx = extract_feature(features, 'd2ydx2', 'a_wave')['idx_local']
+        b_wave_idx = extract_feature(features, 'd2ydx2', 'b_wave')['idx_local']
+        c_wave_idx = extract_feature(features, 'd2ydx2', 'c_wave')['idx_local']
+        d_wave_idx = extract_feature(features, 'd2ydx2', 'd_wave')['idx_local']
+        e_wave_idx = extract_feature(features, 'd2ydx2', 'e_wave')['idx_local']
 
         # Plot the beat signal and derivatives
         fig, axs = plt.subplots(5, 1, figsize=(8, 10), sharex=True)
@@ -338,3 +363,190 @@ class Plots:
         fig.suptitle(f"Beat: {global_beat_index}")
         plt.tight_layout()
         plt.show()
+
+    def filtered_ppg_vs_time_bold(sections, subject):
+        """ 
+        Plots filtered PPG vs time in a nice and bold, presentable format.
+        """
+        # Formatting
+        plt.rcParams.update({
+            "font.size": 12,
+            "font.weight": "bold",
+            "axes.labelsize": 14,
+            "axes.labelweight": "bold",
+            "axes.linewidth": 1.5,    
+            "xtick.labelsize": 12,     
+            "ytick.labelsize": 12,
+            "figure.dpi": 150,
+        })
+        x = sections[0]['timestamp_ms']
+        y = sections[0]['filtered_value']
+
+        fig, ax = plt.subplots(figsize=(7, 5)) 
+
+        # Plot
+        ax.plot(x, y, color='red', linewidth=2)
+
+        # Keep y-axis label -  Remove tick marks/labels:
+        ax.set_ylabel("PPG Intensity (A.u.)")
+        ax.set_yticks([])
+        ax.tick_params(axis='y', which='both', direction="in",
+                       length=0, labelleft=False)
+
+        # Manual x ticks:
+        #ax.set_xticks([0, 5, 10])
+        # Can try a locator:
+        # from matplotlib.ticker import MaxNLocator
+        # ax.xaxis.set_major_locator(MaxNLocator(nbins=3))
+
+        ax.set_xlabel("Time (ms)")
+        
+        ax.tick_params(
+            axis='x',
+            which='both',
+            direction='in',  # Ticks go into the plot
+            length=5,
+            width=1.5,
+            bottom=True,
+            top=True
+        )
+        ax.set_title(f"PPG - 5 Pulses - Subject {subject}", fontweight='bold')
+
+        plt.show()
+
+    def five_sig_one_plot_incl_sliders(subjects):
+        """
+        Plots 5 subjects' PPG data so you can interactively shift each trace 
+        in time (x-axis) and vertical offset (y-axis) for comparison.
+        """
+
+        plt.rcParams.update({
+            "font.size": 12,
+            "font.weight": "bold",
+            "axes.labelsize": 14,
+            "axes.labelweight": "bold",
+            "axes.linewidth": 1.5,
+            "figure.dpi": 150,
+        })
+
+        fig, ax = plt.subplots(figsize=(8, 6))
+        plt.subplots_adjust(bottom=0.45)  # Extra space for 10 sliders (5 time + 5 y)
+
+        lines = []
+        data_list = []
+
+        # Each subject trace gets a base vertical offset to help separate them
+        base_vertical_offset = 2000
+
+        for i in range(5):
+            subj = subjects[i]
+            sensor_df = subj.conditions['cond'].sensors['ppg'].processed_data
+
+            # Subtract the first timestamp so all sigs start ~0
+            t_original = sensor_df['timestamp_ms'].to_numpy()
+            x0 = t_original - t_original[0]
+
+            y0 = sensor_df['filtered_value'].to_numpy()
+            # Add an initial offset to separate each subject
+            initial_offset = base_vertical_offset * i
+
+            line, = ax.plot(
+                x0,
+                y0 + initial_offset,
+                linewidth=2,
+                label=f"{subj.subject_id}"
+            )
+
+            lines.append(line)
+            # Keep the original x,y plus the base offset
+            data_list.append((x0, y0, initial_offset))
+
+        ax.set_xlabel("Time (ms)")
+        ax.set_ylabel("PPG Intensity (A.u.)")
+        ax.set_title("PPG Pluses per Subject", fontweight="bold")
+
+        # Legend format/loc
+        ax.legend(
+            loc='upper left',
+            bbox_to_anchor=(1.01, 1.0),
+            borderaxespad=0.
+        )
+
+        # Hide y-axis ticks/labels but keep y label
+        ax.tick_params(axis='y', which='both', left=False, labelleft=False)
+
+        # Make room for 10 sliders: 5 for time, 5 for y offset
+        slider_height = 0.02
+        slider_axes_x = []
+        slider_axes_y = []
+
+        for i in range(5):
+            # Stack them vertically, so shift downward for each subject
+            y_position = 0.25 - i * (slider_height + 0.01)
+
+            # Time slider - left column
+            ax_slider_time = plt.axes([0.1,  y_position, 0.35, slider_height])
+            # Y offset slider - right column
+            ax_slider_vert = plt.axes([0.55, y_position, 0.35, slider_height])
+
+            slider_axes_x.append(ax_slider_time)
+            slider_axes_y.append(ax_slider_vert)
+
+        # Create Sliders with expanded ranges
+        sliders_time = []
+        sliders_y = []
+        for i in range(5):
+            s_time = Slider(
+                slider_axes_x[i],
+                f"Time {i}",
+                valmin=-200000,
+                valmax=200000,
+                valinit=0,
+                valstep=200
+            )
+            s_vert = Slider(
+                slider_axes_y[i],
+                f"Yoff {i}",
+                valmin=-50000,
+                valmax=50000,
+                valinit=0,
+                valstep=200
+            )
+            sliders_time.append(s_time)
+            sliders_y.append(s_vert)
+
+        def update(val):
+            """
+            Called whenever a slider moves.
+            For each subject i:
+              - read time shift
+              - read y shift
+              - apply them to the original x,y
+              - omit negative time data
+              - update line
+            """
+            for i in range(5):
+                x0, y0, base_offset = data_list[i]
+                shift_x = sliders_time[i].val
+                shift_y = sliders_y[i].val
+
+                x_new = x0 + shift_x
+                y_new = y0 + base_offset + shift_y
+
+                # Remove negative times- super hacky
+                mask = x_new >= 0
+                x_plot = x_new[mask]
+                y_plot = y_new[mask]
+
+                lines[i].set_xdata(x_plot)
+                lines[i].set_ydata(y_plot)
+
+            fig.canvas.draw_idle()
+
+        # Attach the update callback to all sliders
+        for s in sliders_time + sliders_y:
+            s.on_changed(update)
+
+        plt.show()
+
+

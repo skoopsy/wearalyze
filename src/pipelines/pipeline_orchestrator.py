@@ -14,17 +14,21 @@ class PipelineOrchestrator:
             print(f"\n[PipelineOrchestrator] Processing subject: {subject.subject_id}")
             
             for condition_name, condition in subject.conditions.items():
-                print(f"    Processing condition: {condition_name}")
+                print(f"[PipelineOrchestrator] Processing condition: {condition_name}")
 
                 for sensor_type, sensor in condition.sensors.items():
-                    print(f"    Processing sensor: {sensor_type}")
+                    print(f"[PipelineOrchestrator] Processing sensor: {sensor_type}")
 
                 
                     pipeline = PipelineFactory.get_pipeline(sensor_type, 
                                                             sensor, 
                                                             self.config
                     )
-                    pipeline.run()
+                    #TODO: Needs to be sensor agnostic
+                    data, beat_features = pipeline.run()
+                    sensor.add_processed_data(data)
+                    sensor.add_beat_features(beat_features)
+                    
                     # Add try except back in
                     try:
                         a = None

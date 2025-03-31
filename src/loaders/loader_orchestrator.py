@@ -29,20 +29,16 @@ class LoaderOrchestrator:
         data = {}
         for subject in subject_dirs:
             data[subject] = self.load_subject(subject)
-        
+                    
         return data
 
     def load_subject(self, subject):
         """ Load a single subjects data """
         subject_path = os.path.join(self.subjects_dir, subject)
         subject_data = {}
-        if self.multi_condition_status:
-            for condition in self.conditions:
-                condition_path = os.path.join(subject_path, condition)
-                subject_data[condition] = self.load_condition(condition_path)
-        else:
-            # If no separate condition structure, treat the subjects folder as one condition
-            subject_data["single_condition"] = self.load_condition(subject_path)
+        for condition in self.conditions:
+            condition_path = os.path.join(subject_path, condition)
+            subject_data[condition] = self.load_condition(condition_path)
 
         return subject_data
 

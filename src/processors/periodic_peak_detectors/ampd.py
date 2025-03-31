@@ -12,30 +12,34 @@ class AMPDDetector(BaseDetector):
 
     def _peak_detect_ampd(self, signal):
         """
-        Automatic Multiscale Peak Detection for noisey periodic and quasia-periodic signals
-        doi:10.3390/a5040588
-        I have added some more robustness with edge case handling such as small or 
-        linear signals    
-    
-        args:
-        signal - 1D signal to run ampd on (numpy.ndarray)
+        Automatic Multiscale Peak Detection for noisey periodic and 
+        quasia-periodic signalsdoi:10.3390/a5040588
 
-        returns:
-        peaks - Indices of detected peaks (numpy.ndarray)
-        lms - Local Maxima Scalogram matrix (numpy.ndarray)
-        gamma - Vector used to find global minimum (numpy.ndarray)
-        lambda_scale - Scale at which global minimum occurs (int)
+        I have added some more robustness with edge case handling such as small
+        or linear signals    
+        
+        Note: This uses a lot of memory, I can't recall where the part is that
+        limits the input size    
+        
+        Args:
+            signal - 1D signal to run ampd on (numpy.ndarray)
+
+        Returns:
+            peaks - Indices of detected peaks (numpy.ndarray)
+            lms - Local Maxima Scalogram matrix (numpy.ndarray)
+            gamma - Vector used to find global minimum (numpy.ndarray)
+            lambda_scale - Scale at which global minimum occurs (int)
         """
-        print("starting ampd _peak_detect_ampd") 
+        print("[AMPD] Starting ampd _peak_detect_ampd") 
         # Handle small input signals:
         if signal.size < 3:
             return np.array([]), np.array([]), np.array([]), 0
-    
+            print("[AMPD] Rejected small signal (<3)")    
         # AMPD algo
         detrended_signal = detrend(signal) # least mean square linear fit
-        print("ampd - signal detrending successful")
+        print("[AMPD] Signal detrending successful")
         lms = self._compute_lms(detrended_signal) # Local Maxima Scalogram
-        print("ampd - Compute LMS successful")
+        print("[AMPD] Compute LMS successful")
         gamma = np.sum(lms, axis=1) # Row wise summation - sum of scalogram per scale
         lambda_scale = np.argmin(gamma) # Scale with lowest sum - most maximas (0 vals)
         lms = lms[:lambda_scale + 1, :] # Remove scales greater than lambda from lms
@@ -57,12 +61,12 @@ class AMPDDetector(BaseDetector):
         to be made binary which are zero and non-zero values. The zero will
         correspond to maxima.
         """
-        print("ampd - _compute_lms started...")
+        print("[AMPD] _compute_lms started...")
         N = len(signal) # Length of signal
         L = int(np.ceil(N / 2.0)) - 1 # Maximum window size
         # Initialise local maxima scalogram (LMS)
         lms = np.random.rand(L, N) + 1 # Rand val in [1, 2)
-        #self._memory_usage(lms)
+        self._memory_usage(lms)
         match implementation:
             case 0: # Pure python Loop version
                 for k in range(1, L + 1):
@@ -71,7 +75,7 @@ class AMPDDetector(BaseDetector):
                             lms[k - 1, i] = 1
 
             case 1: # Vectorised using Numpy
-                print("ampd - starting vectorised lms compute")
+                print("[AMPD] starting vectorised lms compute")
                 for k in range(1, L + 1):
                     idx = np.arange(k, N - k)
                     condition = (signal[idx] > signal[idx - k]) & (signal[idx] > signal[idx + k])
@@ -80,5 +84,5 @@ class AMPDDetector(BaseDetector):
 
         return lms
     
-    def _memory_usage(var):
-        print(f"Memory usage of variable: {sys.getsizeof(var)} bytes")
+    def _memory_usage(self, var):
+        print(f"[AMPD] Memory usage of variable: {sys.getsizeof(var)} bytes")

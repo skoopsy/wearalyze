@@ -6,7 +6,8 @@ import numpy as np
 from preprocessors.ppg_preprocess import PPGPreProcessor
 
 @pytest.fixture
-def sample_polar_data():
+def sample_corsano_data():
+    """  have not confirmed compliance behaviour for corasno """
     data = pd.DataFrame({
         'timestamp': pd.date_range(start='2022-01-01 00:00:00', periods=100, freq='1s'),
 
@@ -14,6 +15,18 @@ def sample_polar_data():
         'ppg': [10, 22, 21, 24, 25, 30, 60, 18, 15, 10] * 10
     })
     return data
+
+@pytest.fixture
+def sample_polar_data():
+    """  have not confirmed compliance behaviour for corasno """
+    data = pd.DataFrame({
+        'timestamp': pd.date_range(start='2022-01-01 00:00:00', periods=100, freq='1s'),
+
+        'timestamp_ms': np.linspace(0,40000,num=100), 
+        'ppg': [10, -22, -21, -24, -25, -30, -60, -18, -15, 10] * 10
+    })
+    return data
+
 
 @pytest.fixture
 def sample_polar_config():
@@ -41,6 +54,6 @@ def test_compliance_check_polar(sample_polar_data, sample_polar_config):
     #print(sections)
 
     assert len(sections) == 10
-    assert sections[0]['ppg'].iloc[0] == 22
+    assert sections[0]['ppg'].iloc[0] == -22
 
 #TODO make cheby2 filter check, bit more complicated

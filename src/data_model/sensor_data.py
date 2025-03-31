@@ -7,6 +7,8 @@ class SensorData:
         self.data = data
         self.subject = subject
         self.condition = condition
+        self.processed_data = None
+        self.beat_features = None
     
     def get_data(self) -> pd.DataFrame:
         """
@@ -19,6 +21,12 @@ class SensorData:
 
     def get_condition():
         return self.condition
+
+    def add_processed_data(self, pdata):
+        self.processed_data = pdata
+
+    def add_beat_features(self, bfeat):
+        self.beat_features = bfeat
 
     def __repr__(self) -> str:
         return f"SensorData(sensor_type={self.sensor_type}, rows={len(self.data)})"

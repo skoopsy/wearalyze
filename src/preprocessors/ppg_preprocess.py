@@ -25,6 +25,8 @@ class PPGPreProcessor:
         """
         Computess the sampling frequency of input data
 
+        Note: there is downsmapling, but better to use resample()
+
         Args:
             sections (list of pd.DataFrame): sections of data thresholded for
                  compliance (may mitigate dynamic sampling issues)
@@ -56,15 +58,15 @@ class PPGPreProcessor:
             
         interval_str = f'{int(interval_ms)}ms'
         
-        print(f'Detected measured sample frequency: {final_freq} Hz')
-        print(f'{interval_str}')
+        print(f'[PPGPreProcessor] Sensor sample frequency (Raw): {final_freq} Hz')
+        print(f'[PPGPreProcessor] Sensor sample period (Raw): {interval_str}')
 
         return final_freq, interval_ms, interval_str
 
    
-    def resample(self, sections: pd.DataFrame, resample_freq):
+    def resample(self, sections: pd.DataFrame, resample_freq, input_freq):
         """
-        Resample time series data
+        Resample time series data properly!
         """
         resampled_sections = []
 
@@ -90,11 +92,13 @@ class PPGPreProcessor:
             })
             
             resampled_sections.append(section_resampled)
+            
+        print(f"[PPGPreProcessor] Sensor resampled from {input_freq} Hz to {resample_freq} Hz")
 
         return resampled_sections 
              
 
-    def filter_cheby2(self, sections):
+    def filter_cheby2(self, sections, sample_freq):
         """
         Apply Chebyshev Type II filter to each section of input data
         
@@ -102,12 +106,11 @@ class PPGPreProcessor:
          1. appendeds a new column to the input dataframe inplace called filtered_value
          2. Returns a new dataframe with the filtered_values and timestamp on their own.
         """
-
-        sample_rate = self.config['filter']['sample_rate']
+           
         lowcut = self.config['filter']['lowcut']
         highcut = self.config['filter']['highcut']
         order = self.config['filter']['order']
-        nyquist = 0.5 * sample_rate
+        nyquist = 0.5 * sample_freq
 
         b, a = cheby2(order, 20, [lowcut / nyquist, highcut / nyquist], btype='band')
         filtered_sections = []

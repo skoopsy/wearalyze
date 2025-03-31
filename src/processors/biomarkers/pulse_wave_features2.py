@@ -1,12 +1,13 @@
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-
 from .derivatives_calculator import DerivativesCalculator
 from .signal_smoothing import SignalSmoothing
 
-#TODO: Refactor into more classes PulseWaveFeatureOrchestrator,FeatureExtractor, ZeroCrossingAnalyser, 
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from scipy.signal import find_peaks
 
+#TODO: Refactor into more classes PulseWaveFeatureOrchestrator,FeatureExtractor, ZeroCrossingAnalyser, 
+#TODO: Refactor feature calculations into granular modules for testing.
 
 class PulseWaveFeatures:
     """
@@ -109,16 +110,21 @@ class PulseWaveFeatures:
             d2ydx2_features = self.compute_features_d2ydx2(beat_data,
                                                            dydx_features
             )
+            """
             d3ydx3_features = self.compute_features_d3ydx3(beat_data,
                                                            dydx_features,
                                                            d2ydx2_features
             )
+            """
             
             # Collect in beat_features dict
-            beat_features.update(y_features)
-            beat_features.update(dydx_features)
-            beat_features.update(d2ydx2_features)
-            beat_features.update(d3ydx3_features)
+            try:
+                beat_features.update(y_features)
+                beat_features.update(dydx_features)
+                beat_features.update(d2ydx2_features)
+                #beat_features.update(d3ydx3_features)
+            except TypeError:
+                continue
 
             # Add beat features as row in beats_features            
             all_beats_features.append(beat_features)
@@ -172,36 +178,45 @@ class PulseWaveFeatures:
         Returns:    
             dict: {'dydx':{...}} with dydx features.
         """
-        features_dict = {}
+        features_dict = {'detected': True}
         
         if len(beat) < 2:
             # Not enough points for useful derivative
             features_dict.update({
+                'detected': False,
                 'ms': None,
                 'systole': {'detected': False},
                 'diastole': {'detected': False}
             })
             return {'dydx': features_dict}
 
-        # Feature: ms - Max upslope of systole index
+        # Feature: ms - Max upslope of systole index       
         try:
-            ms_idx_global = beat['sig_1deriv'].idxmax()
-            ms_idx_local = np.nanargmax(beat['sig_1deriv'].values)
-            features_dict['ms'] = ms_idx_local
-        except ValueError:
+            if sum(beat['sig_1deriv'].isna()) > 0.5*len(beat['sig_1deriv']):
+                features_dict['detected'] = False
+                ms_idx_global = None
+                ms_idx_local = None
+                features_dict['ms'] = None
+            else:
+                ms_idx_global = beat['sig_1deriv'].idxmax()
+                ms_idx_local = np.nanargmax(beat['sig_1deriv'].values)
+                features_dict['ms'] = ms_idx_local
+        except ValueError or TypeError:
             # if values are NaN
+            features_dict['detected'] = False
             ms_idx_global = None
             ms_idx_local = None
             features_dict['ms'] = None
 
-        # Compute zero-crossing points in dydx
-        zero_cross = self._compute_zero_crossings_dict(
-            beat, sig_name='sig_1deriv', crossing_type="pos2neg"
-        )
-        features_dict['zero_crossings'] = zero_cross
+        if ms_idx_local is not None:
+            # Compute zero-crossing points in dydx
+            zero_cross = self._compute_zero_crossings_dict(
+                beat, sig_name='sig_1deriv', crossing_type="pos2neg"
+            )
+            features_dict['zero_crossings'] = zero_cross
 
         # Feature: Systole - 1st p2n zero-crossing after ms
-        if zero_cross['sum'] > 0 and ms_idx_local is not None:
+        if ms_idx_local is not None and zero_cross['sum'] > 0: 
             zc_after_ms = [zc for zc in zero_cross['idxs'] if zc > ms_idx_local]
             if len(zc_after_ms) > 0:
                 first_zc_idx_local = zc_after_ms[0]
@@ -219,7 +234,7 @@ class PulseWaveFeatures:
             features_dict['systole'] = {'detected': False}
 
         # Feature: Diastole - 2nd p2n zero-crossing after ms
-        if zero_cross['sum'] > 1 and ms_idx_local is not None:
+        if ms_idx_local is not None and zero_cross['sum'] > 1:
             zc_after_ms = [zc for zc in zero_cross['idxs'] if zc > ms_idx_local]
             if len(zc_after_ms) >= 2:
                 second_zc_idx_local = zc_after_ms[1]
@@ -234,7 +249,7 @@ class PulseWaveFeatures:
 
                 # Systole-Diastole Delta Time
                 if features_dict['systole']['detected']:
-                    deltaT = diastole_time - feature_dict['systole']['time']
+                    deltaT = diastole_time - features_dict['systole']['time']
                     features_dict['sys-dia-deltaT_ms'] = deltaT
             else: 
                 features_dict['diastole'] = {'detected': False}
@@ -252,7 +267,11 @@ class PulseWaveFeatures:
         a, b, c, d, e, & f waves. This uses fiducials from features calculated 
         from running compute_features_dydx() such as ms_idx.
         """
-        features_dict = {}
+        features_dict = {'detected': True}
+
+        if features_dydx['dydx']['ms'] is None:
+            features_dict['detected'] = False
+            return
 
         # Get ms_idx from dydx features
         ms_idx_local = features_dydx['dydx'].get('ms', None)
@@ -277,10 +296,10 @@ class PulseWaveFeatures:
         a_idx_local = None
         a_val = None
 
-        if ms_idx_local > 0:
+        if ms_idx_local is not None and ms_idx_local > 0:
 
             a_region = sig_d2ydx2[:ms_idx_local]
-            a_peaks = _local_maxima(a_region, prominence=0.1, min_peak_dist=2)
+            a_peaks = self._local_maxima(a_region)
             
             if a_peaks:
                 a_idx_local = int(a_peaks[np.argmax(a_region[a_peaks])])
@@ -292,21 +311,38 @@ class PulseWaveFeatures:
             'time': beat['timestamp_ms'].iloc[a_idx_local] if a_idx_local is not None else None 
         }                 
 
-        breakpoint()
+        
         # b wave - first local minima after a
         b_idx_local = None
         b_val = None
         
         if a_idx_local is not None and a_idx_local < len(sig_d2ydx2) - 1:
             b_region = sig_d2ydx2[a_idx_local + 1 :]
-            b_mimima = local_minima(b_region, prominence=0.1, min_peak_dist=2)
-            
+            b_mimima = self._local_minima(b_region, prominence=0.1, min_peak_dist=2)
+        features_dict['b_wave'] = {
+            'idx_local': 1,
+            'value': 1,
+            'time': beat['timestamp_ms'].iloc[a_idx_local] if a_idx_local is not None else None 
+        } 
         # e wave - 2nd maxima of d2ydx2 after ms and before 0.6T, unless c is inflection point, in which case take first maximum
+        features_dict['e_wave'] = {
+            'idx_local': 1,
+            'value': 1,
+            'time': beat['timestamp_ms'].iloc[a_idx_local] if a_idx_local is not None else None 
+        } 
 
         # c wave - greatest max between b and e, if no max then 1st of the 1st max on dydx after e or first min on d3ydx3 after e
-
+        features_dict['c_wave'] = {
+            'idx_local': 1,
+            'value': 1,
+            'time': beat['timestamp_ms'].iloc[a_idx_local] if a_idx_local is not None else None 
+        } 
         # d wave - lowest min on d2ydx2 after c and before e (if no minima then coincident with c)
-
+        features_dict['d_wave'] = {
+            'idx_local': 1,
+            'value': 1,
+            'time': beat['timestamp_ms'].iloc[a_idx_local] if a_idx_local is not None else None 
+        } 
         # f wave - 1st local minium of d2ydx2 after e and before 0.8T
 
 
@@ -314,7 +350,7 @@ class PulseWaveFeatures:
 
 
     def compute_features_d3ydx3(self, beat: pd.DataFrame) -> dict:
-        
+         
         features_dict = {}
         
          #TODO modify compute_zero_cross to label p2n and n2p in both method.
@@ -442,14 +478,14 @@ class PulseWaveFeatures:
 
         return zero_crossings 
     
-    def _local_maxima(signal: list, prominence: float = 0.1, min_peak_dist: int = 1) -> list:
+    def _local_maxima(self, signal, prominence: float = 0.1, min_peak_dist: int = 1) -> list:
         """ Return maximum from a 1D signal using scipy find_peaks """    
         peaks, _ = find_peaks(signal, prominence=prominence, distance=min_peak_dist)
         
         return peaks.tolist()
 
-    def _local_minima(signal: list, prominence: float = 0.1, min_peak_dist: int = 1) -> list:
+    def _local_minima(self, signal: list, prominence: float = 0.1, min_peak_dist: int = 1) -> list:
         """ Returns minimum indice from 1D signal using scipy find_peaks """
-        peaks, _ = find_peaks(-signal, prominence=prominence, distance=min_dist_peaks)
+        peaks, _ = find_peaks(-signal, prominence=prominence, distance=min_peak_dist)
         
         return peaks.tolist()
