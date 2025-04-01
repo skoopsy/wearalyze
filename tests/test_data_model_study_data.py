@@ -105,7 +105,6 @@ def test_sessiondata_creation(sample_session):
     assert isinstance(sample_session.processed, dict)
     assert len(sample_session.processed) == 0
 
-    # The epochs dict might have a small syntax error in the class definition but let's test logically
     assert hasattr(sample_session, "epochs"), \
         "SessionData should have an attribute 'epochs'."
     assert isinstance(sample_session.epochs, dict)
