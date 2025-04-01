@@ -1,9 +1,9 @@
 import json
+import os
 from src.utils.arg_parser import get_arguments
 
 def load_config_file(config_path):
 	""" Loads config setting from JSON file """
-
 	with open(config_path, 'r') as f:
 		return json.load(f)
 
