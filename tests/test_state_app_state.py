@@ -1,141 +1,226 @@
-from src.state.app_state import AppState
-
 import pytest
-
-# Dummy implementations for testing
-class DummyCheckpointManager:
-    """
-    A dummy checkpoint manager for testing. You can control whether it 
-    simulates an existing checkpoint, and capture what is saved.
-    """
-    def __init__(self, load_status=True, exists=True, load_return=None, save_status=True):
-        self._load_status = load_status
-        self._exists = exists
-        self._load_return = load_return or {}
-        self._save_status = save_status
-        self.save_called_with = None
-        self._load_id = 1
-        self._save_id = 1
-        self._directory = "dummy_dir"
-        self._data_id = "dummy_data_id"
-
-    def get_load_status(self):
-        return self._load_status
-
-    def exists(self):
-        return self._exists
-
-    def load(self):
-        return self._load_return
-
-    def get_load_id(self):
-        return self._load_id
-
-    def get_save_status(self):
-        return self._save_status
-
-    def get_save_id(self):
-        return self._save_id
-
-    def get_load_path(self):
-        return "dummy_load_path"
-
-    def get_save_path(self):
-        return "dummy_save_path"
-
-    def save(self, data):
-        self.save_called_with = data
-
-    def conditional_save_load(self, checkpoint_id: int, save_data=None):
-        if self.get_load_status() and self.get_load_id() == checkpoint_id and self.exists():
-            return self.load()
-        if self.get_save_status() and self.get_save_id() == checkpoint_id and save_data is not None:
-            self.save(save_data)
-        return save_data
-
-# Dummy LoaderOrchestrator that returns a fixed raw-data dictionary.
-class DummyLoaderOrchestrator:
-    def __init__(self, config):
-        self.config = config
-
-    def load_all(self):
-        return {"dummy": "raw_data"}
-
-# Dummy subject factory function that returns a fixed list of subjects.
-def dummy_create_subjects_from_nested_dicts(all_data):
-    return ["subject1", "subject2"]
+from unittest.mock import patch, MagicMock
+from src.state.app_state import AppState
+from src.data_model.study_data import StudyData
 
 
-# Fixtures for config and monkeypatching
 @pytest.fixture
-def dummy_config():
-    # Config dictionary with required keys for AppState
-    return {
-        "data_source": {"device": "dummy_device"},
-        "checkpoint": {
-            "global": {
-                "load": {
-                    "status": True,
-                    "directory": "dummy_dir",
-                    "checkpoint_id": 1,
-                    "data_id": "dummy_data_id"
-                },
-                "save": {
-                    "status": True,
-                    "directory": "dummy_dir",
-                    "checkpoint_id": 1,
-                    "data_id": "dummy_data_id"
-                }
-            }
-        }
-    }
+def mock_config():
+    return {"some_config_key": "some_config_value"}
 
 
-def test_load_from_checkpoint(dummy_config):
-    """
-    If a checkpoint exists, AppState.load() should load the saved state.
-    """
-    # Simulate a checkpoint that returns a known state.
-    dummy_state = {"all_data": "loaded_all_data", "subjects": "loaded_subjects"}
-    dummy_cp = DummyCheckpointManager(load_status=True, exists=True, load_return=dummy_state)
-    app_state = AppState(dummy_config, dummy_cp)
-    app_state.load()
-    assert app_state.all_data == "loaded_all_data"
-    assert app_state.subjects == "loaded_subjects"
+@pytest.fixture
+def mock_checkpoint_config():
+    return {"checkpoint_path": "/fake/path/to/checkpoints"}
 
 
-def test_build_fresh_state(dummy_config, monkeypatch):
+@pytest.fixture
+def mock_checkpoint_manager():
     """
-    If no checkpoint exists, AppState should build a fresh state using 
-    LoaderOrchestrator and subject factory.
+    Patches CheckpointManager at the class level, returning a tuple:
+    (mock_checkpoint_manager_class, mock_checkpoint_manager_instance)
     """
-    # Dummy checkpoint manager that simulates no valid checkpoint.
-    dummy_cp = DummyCheckpointManager(load_status=False, exists=False)
-    # Monkeypatch LoaderOrchestrator and subject factory in AppState.
-    monkeypatch.setattr("src.state.app_state.LoaderOrchestrator", DummyLoaderOrchestrator)
-    monkeypatch.setattr("src.state.app_state.create_subjects_from_nested_dicts", dummy_create_subjects_from_nested_dicts)
-    
-    app_state = AppState(dummy_config, dummy_cp)
-    app_state.load()
-    # DummyLoaderOrchestrator returns {"dummy": "raw_data"}
-    assert app_state.all_data == {"dummy": "raw_data"}
-    # Dummy subject factory returns ["subject1", "subject2"]
-    assert app_state.subjects == ["subject1", "subject2"]
-    # Since saving is enabled, the checkpoint manager's save() should have been called.
-    assert dummy_cp.save_called_with is not None
+    with patch("src.state.app_state.CheckpointManager", autospec=True) as mock_cls:
+        mock_instance = mock_cls.return_value
+        yield (mock_cls, mock_instance)
 
 
-def test_get_subjects_and_raw_data(dummy_config, monkeypatch):
+@pytest.fixture
+def mock_loader_orchestrator():
     """
-    If subjects and raw data are not loaded, get_subjects() and get_raw_data()
-    should trigger loading
+    Patches LoaderOrchestrator at the class level, returning a tuple:
+    (mock_loader_orchestrator_class, mock_loader_orchestrator_instance)
     """
-    dummy_cp = DummyCheckpointManager(load_status=False, exists=False)
-    monkeypatch.setattr("src.state.app_state.LoaderOrchestrator", DummyLoaderOrchestrator)
-    monkeypatch.setattr("src.state.app_state.create_subjects_from_nested_dicts", dummy_create_subjects_from_nested_dicts)
-    
-    app_state = AppState(dummy_config, dummy_cp)
-    subjects = app_state.get_subjects()
-    raw_data = app_state.get_raw_data()
-    assert subjects == ["subject1", "subject2"]
-    assert raw_data == {"dummy": "raw_data"}
+    with patch("src.state.app_state.LoaderOrchestrator", autospec=True) as mock_cls:
+        mock_instance = mock_cls.return_value
+        yield (mock_cls, mock_instance)
+
+
+class TestAppState:
+    def test_init_app_state(
+        self,
+        mock_config,
+        mock_checkpoint_config,
+        mock_checkpoint_manager  # (class, instance)
+    ):
+        """
+        Test that AppState initializes correctly, creating a CheckpointManager
+        and setting initial study_data to None.
+        """
+        mock_checkpoint_manager_class, mock_checkpoint_manager_instance = mock_checkpoint_manager
+
+        app_state = AppState(mock_config, mock_checkpoint_config)
+
+        # Check the constructor was called once with the checkpoint config
+        mock_checkpoint_manager_class.assert_called_once_with(mock_checkpoint_config)
+
+        # Check initial values
+        assert app_state.config == mock_config
+        assert app_state.study_data is None
+
+    def test_load_from_checkpoint(
+        self,
+        mock_config,
+        mock_checkpoint_config,
+        mock_checkpoint_manager,
+        mock_loader_orchestrator
+    ):
+        """
+        Test that load() will retrieve data from an existing checkpoint if
+        get_load_status and exists both return True, and does NOT build a fresh state.
+        """
+        _, mock_checkpoint_manager_instance = mock_checkpoint_manager
+        mock_checkpoint_manager_instance.get_load_status.return_value = True
+        mock_checkpoint_manager_instance.exists.return_value = True
+        mock_checkpoint_manager_instance.load.return_value = {"study_data": "mocked_data"}
+
+        _, mock_loader_orchestrator_instance = mock_loader_orchestrator
+
+        app_state = AppState(mock_config, mock_checkpoint_config)
+        result = app_state.load()
+
+        # Verify checkpoint usage
+        mock_checkpoint_manager_instance.get_load_status.assert_called_once()
+        mock_checkpoint_manager_instance.exists.assert_called_once()
+        mock_checkpoint_manager_instance.load.assert_called_once()
+
+        # Verify we did NOT attempt to build a fresh state
+        mock_loader_orchestrator_instance.load_study_data.assert_not_called()
+
+        # AppState should now have the checkpoint's study_data
+        assert result.study_data == "mocked_data"
+
+    def test_load_fresh_state_if_no_checkpoint(
+        self,
+        mock_config,
+        mock_checkpoint_config,
+        mock_checkpoint_manager,
+        mock_loader_orchestrator
+    ):
+        """
+        Test that load() builds a fresh state if checkpoint is not available,
+        or if get_load_status is False.
+        """
+        _, mock_checkpoint_manager_instance = mock_checkpoint_manager
+        mock_checkpoint_manager_instance.get_load_status.return_value = False
+        mock_checkpoint_manager_instance.exists.return_value = False
+
+        mock_loader_orchestrator_class, mock_loader_orchestrator_instance = mock_loader_orchestrator
+        mock_loader_orchestrator_instance.load_study_data.return_value = "fresh_mocked_data"
+
+        app_state = AppState(mock_config, mock_checkpoint_config)
+        result = app_state.load()
+
+        mock_checkpoint_manager_instance.load.assert_not_called()
+
+        mock_loader_orchestrator_class.assert_called_once_with(mock_config)
+        mock_loader_orchestrator_instance.load_study_data.assert_called_once()
+
+        assert result.study_data == "fresh_mocked_data"
+
+    def test_build_state_saves_if_save_status_true(
+        self,
+        mock_config,
+        mock_checkpoint_config,
+        mock_checkpoint_manager,
+        mock_loader_orchestrator
+    ):
+        """
+        Test that _build_state saves to the checkpoint if get_save_status is True.
+        """
+        _, mock_checkpoint_manager_instance = mock_checkpoint_manager
+        mock_checkpoint_manager_instance.get_save_status.return_value = True
+
+        _, mock_loader_orchestrator_instance = mock_loader_orchestrator
+        mock_loader_orchestrator_instance.load_study_data.return_value = StudyData()
+
+        app_state = AppState(mock_config, mock_checkpoint_config)
+        # Directly call the method to test its behavior
+        app_state._build_state()
+
+        # LoaderOrchestrator's load_study_data() should have been called
+        mock_loader_orchestrator_instance.load_study_data.assert_called_once()
+
+        # Because save_status is True, checkpoint.save(...) should be called
+        mock_checkpoint_manager_instance.save.assert_called_once()
+        call_args = mock_checkpoint_manager_instance.save.call_args[0][0]
+        # We expect the "study_data" key to hold a StudyData object
+        assert isinstance(call_args["study_data"], StudyData)
+
+    def test_build_state_does_not_save_if_save_status_false(
+        self,
+        mock_config,
+        mock_checkpoint_config,
+        mock_checkpoint_manager,
+        mock_loader_orchestrator
+    ):
+        """
+        Test that _build_state does NOT save if get_save_status is False.
+        """
+        _, mock_checkpoint_manager_instance = mock_checkpoint_manager
+        mock_checkpoint_manager_instance.get_save_status.return_value = False
+
+        _, mock_loader_orchestrator_instance = mock_loader_orchestrator
+        mock_loader_orchestrator_instance.load_study_data.return_value = StudyData()
+
+        app_state = AppState(mock_config, mock_checkpoint_config)
+        app_state._build_state()
+
+        mock_checkpoint_manager_instance.save.assert_not_called()
+
+    def test_get_study_data_calls_load_if_none(
+        self,
+        mock_config,
+        mock_checkpoint_config,
+        mock_checkpoint_manager,
+        mock_loader_orchestrator
+    ):
+        """
+        Test that get_study_data triggers a load() call if study_data is None.
+        """
+        _, mock_checkpoint_manager_instance = mock_checkpoint_manager
+        # Turn off checkpoint load for simplicity
+        mock_checkpoint_manager_instance.get_load_status.return_value = False
+        mock_checkpoint_manager_instance.exists.return_value = False
+
+        _, mock_loader_orchestrator_instance = mock_loader_orchestrator
+        mock_loader_orchestrator_instance.load_study_data.return_value = "fresh_mocked_data"
+
+        app_state = AppState(mock_config, mock_checkpoint_config)
+        assert app_state.study_data is None
+
+        data1 = app_state.get_study_data()
+        data2 = app_state.get_study_data()
+
+        # The first time, it triggers load() -> _build_state
+        # The second time, it should just return the cached data
+        assert data1 == "fresh_mocked_data"
+        assert data2 == "fresh_mocked_data"
+
+        # Confirm loader got called exactly once overall
+        mock_loader_orchestrator_instance.load_study_data.assert_called_once()
+
+    def test_get_study_data_returns_cached_if_not_none(
+        self,
+        mock_config,
+        mock_checkpoint_config,
+        mock_checkpoint_manager,
+        mock_loader_orchestrator
+    ):
+        """
+        Test that get_study_data returns the cached study_data without calling load()
+        again if study_data is already set.
+        """
+        app_state = AppState(mock_config, mock_checkpoint_config)
+        app_state.study_data = "already_loaded"
+
+        returned_data = app_state.get_study_data()
+        assert returned_data == "already_loaded"
+
+        # Since study_data is not None, it should never call .load() on checkpoint
+        # or try building a fresh state via LoaderOrchestrator.
+        _, mock_checkpoint_manager_instance = mock_checkpoint_manager
+        mock_checkpoint_manager_instance.get_load_status.assert_not_called()
+
+        _, mock_loader_orchestrator_instance = mock_loader_orchestrator
+        mock_loader_orchestrator_instance.load_study_data.assert_not_called()
