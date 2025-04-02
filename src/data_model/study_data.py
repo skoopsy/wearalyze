@@ -68,6 +68,7 @@ class SessionData:
         return (f"SessionData(subject={self.subject_id}, "
                 f"session={self.session_name}, "
                 f"sensors={list(self.sensors.keys())}, "
+                f"processed={list(self.processed.keys())}, "
                 f"epochs={list(self.epochs.keys())}"
         )
 
