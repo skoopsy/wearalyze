@@ -8,7 +8,7 @@ class PipelineFactory:
     }
 
     @staticmethod
-    def get_pipeline(sensor_type, sensor, config):
+    def get_pipeline(sensor_type, config):
         """ Returns pipeline for given sensor type """
         
         pipeline_class = PipelineFactory.SENSOR_PIPELINES.get(sensor_type)

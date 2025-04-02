@@ -1,37 +1,35 @@
 from .pipeline_factory import PipelineFactory
+from src.data_model.study_data import StudyData
 
 class PipelineOrchestrator:
-    
-    def __init__(self, subjects, config):
-        self.subjects = subjects
+    """
+    Orchestrates pipeline execution per subject/session/sensor
+    """
+    def __init__(self, study_data: StudyData, config):
+        self.study_data = study_data
         self.config = config
 
     def run(self):
-        """ 
-        Runs pipeline for each sensor, for each condition, for each subject
-        """
-        for subject in self.subjects:
-            print(f"\n[PipelineOrchestrator] Processing subject: {subject.subject_id}")
+        for subject_id, subject in self.study_data.subjects.items():
+            print(f"\n[PipelineOrchestrator] Processing subject: {subject_id}")
             
-            for condition_name, condition in subject.conditions.items():
-                print(f"[PipelineOrchestrator] Processing condition: {condition_name}")
+            for session_name, session_data in subject.sessions.items():
+                print(f"[PipelineOrchestrator] Processing session: {session_name}")
 
-                for sensor_type, sensor in condition.sensors.items():
+                for sensor_type, sensor_df in session_data.sensors.items():
                     print(f"[PipelineOrchestrator] Processing sensor: {sensor_type}")
 
                 
                     pipeline = PipelineFactory.get_pipeline(sensor_type, 
-                                                            sensor, 
                                                             self.config
                     )
-                    #TODO: Needs to be sensor agnostic
-                    data, beat_features = pipeline.run()
-                    sensor.add_processed_data(data)
-                    sensor.add_beat_features(beat_features)
+
+                    if pipeline is None:
+                        print(f"[PipelineOrchestrator] No pipeline for {sensor_type}, skipping.")
+                        continue
+                    processed_data, processed_features = pipeline.run(sensor_df)
                     
-                    # Add try except back in
-                    try:
-                        a = None
-                    except ValueError as e:
-                        print(f"{e} - No pipeline found for sensor: {sensor_type}")
+                    session_data.processed[f"{sensor_type}_processed"] = processed_data
+                    session_data.processed[f"{sensor_type}_features"] = processed_features 
+
 
