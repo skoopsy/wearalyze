@@ -12,7 +12,7 @@ class HeartBeatDetector:
         """
     
         self.beat_detector_name = config["ppg_processing"]["beat_detector"]
-        self    .verbosity = config['outputs']['print_verbosity']
+        self.verbosity = config['outputs']['print_verbosity']
     
     def process_sections(self, sections: list()):
         """
@@ -71,21 +71,21 @@ class HeartBeatDetector:
 
     def _detect_peaks_fixed_chunk_size(self, signal, beat_detector, chunk_size: int = 12000):
         """
-        Break a signal up into smaller chunks ready for periodic beat detection 
+        Break a signal up into smaller epochs ready for periodic beat detection 
         algorithms. Smaller input signal length results in less memory usage,
-        if the signal is highly varying voer time then a smaller chunk will
+        if the signal is highly varying voer time then a smaller epoch will
         probably be better. A longer signal is better for very consistent signals. 
         You can balance this with your pre-processing steps!
 
         Re-combines the peak indices with correct offsets for output.
 
-        Chunk size of 3000 (indicies) -> 30s of data at 100 Hz, make a function
+        Epoch size of 3000 (indicies) -> 30s of data at 100 Hz, make a function
         to do this dynamically based on resampling
         
         Args:
             signal (pd.Series) - Input signal, just the values 
             beat_detector - instance of chosen periodic beat detector class
-            chunk_size (int) - Size of signal to forward to beat detector instance
+            epoch_size (int) - Size of signal to forward to beat detector instance
         
         Returns:
             peaks (list)
