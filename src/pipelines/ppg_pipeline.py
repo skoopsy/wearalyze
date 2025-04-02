@@ -11,8 +11,7 @@ from src.visuals.plots import Plots
 import os
 
 class PPGPipeline:
-    def __init__(self, sensor, config):
-        self.sensor = sensor
+    def __init__(self, config):
         self.config = config
         self.CONF_preprocess = config["ppg_preprocessing"]
         self.checkpoint = CheckpointManager(config=config['checkpoint']['pipeline_ppg'])
