@@ -1,10 +1,8 @@
 from src.loaders.config_loader import get_config
-from src.loaders.loader_orchestrator import LoaderOrchestrator
-from src.checkpoints.checkpoint_manager import CheckpointManager
+#from src.loaders.loader_orchestrator import LoaderOrchestrator
+#from src.checkpoints.checkpoint_manager import CheckpointManager
 from src.state.app_state import AppState
-
-from src.data_model.subject_factory import create_subjects_from_nested_dicts # surplus?
-
+#from src.data_model.subject_factory import create_subjects_from_nested_dicts # surplus?
 from src.pipelines.pipeline_orchestrator import PipelineOrchestrator
 from src.visuals.plots import Plots
 
@@ -16,14 +14,15 @@ def main():
     # Parse cmd line args and load config
     config = get_config()
     verbosity = config['outputs']['print_verbosity']
-    app_checkpoint = CheckpointManager(config=config['checkpoint']['app_state'])
     
     # Get app state (initialise or load)
-    app_state = AppState(config, app_checkpoint).load()
-    subjects = app_state.get_subjects()
+    app_state = AppState(config=config, checkpoint_config=config["checkpoint"]["app_state"]).load()
+
+    # Retrive study data
+    study_data = app_state.get_study_data()
 
     # Run processing pipeline
-    pipeline_orchestrator = PipelineOrchestrator(subjects, config)
+    pipeline_orchestrator = PipelineOrchestrator(study_data, config)
     pipeline_orchestrator.run()
 
     breakpoint()

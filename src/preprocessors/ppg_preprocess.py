@@ -6,17 +6,17 @@ import numpy as np
 from datetime import timedelta
 
 class PPGPreProcessor:
-    def __init__(self, data, config):
+    def __init__(self, data: pd.DataFrame, config):
         self.data = data
         self.config = config
         self.device = config['data_source']['device']
+        self.compliance_check_method = ComplianceCheckFactory.get_check_method(self.device) # Factory to get device specific compliance thresholding methods
 
-        # Factory to get device specific compliance thresholding methods
-        self.compliance_check_method = ComplianceCheckFactory.get_check_method(self.device)
  
     def create_compliance_sections(self):
         """ 
-        Delegates device compliance thresholding to device specific method
+        Delegates device compliance (is the ppg sensor being worn) 
+        thresholding to device specific method
         """
     
         return self.compliance_check_method.create_compliance_sections(self.data, self.config)
@@ -43,19 +43,13 @@ class PPGPreProcessor:
         combined = combined.sort_values('timestamp_ms')
 
         # Calc intervals
-        intervals_ms = combined['timestamp_ms'].diff().dropna()
-        
+        intervals_ms = combined['timestamp_ms'].diff().dropna() 
         median_interval_ms = intervals_ms.median() # In ms
-
         freq = 1000.0 / median_interval_ms
-
         rounded_freq = round(freq)
-
         final_freq = rounded_freq / downsampling_factor
-
         interval_ms = 1000.0 / final_freq
         interval_ms = round(interval_ms, 3)
-            
         interval_str = f'{int(interval_ms)}ms'
         
         print(f'[PPGPreProcessor] Sensor sample frequency (Raw): {final_freq} Hz')

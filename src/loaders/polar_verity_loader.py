@@ -26,7 +26,7 @@ class PolarVerityLoader(BaseLoader):
         }
 
 
-    def load_sensor_data(self, sensor, files):
+    def load_sensor_data(self, sensor_type: str, files):
         """
         For a sensor type and list of file paths, filter files using device
         specific regex and load the data into a DataFrame - Combining all files
@@ -34,27 +34,29 @@ class PolarVerityLoader(BaseLoader):
         """
         
         # Get sensor file names
-        pattern =self.sensor_patterns.get(sensor)
+        pattern =self.sensor_patterns.get(sensor_type)
         if pattern is None:
-            raise ValueError(f"Sensor type not supported / incorrect: {sensor}")
+            return pd.DataFrame()
 
         sensor_files = [f for f in files if re.search(pattern, os.path.basename(f))]
         if not sensor_files:
-            raise ValueError(f"PolarVerityLoader.py: No files found for sensor: {sensor}")
             return pd.DataFrame() # Empty df
 
-        data = []
-        req_cols = self.required_columns.get(sensor)
+        dataframes = []
+        req_cols = self.required_columns.get(sensor_type, [])
 
         for file_path in sensor_files:
-            file_data = pd.read_csv(file_path, delimiter=";", usecols=req_cols)
-            if not set(req_cols).issubset(file_data.columns):
-                raise ValueError(f"File {file_path} is missing required columns for sensor: {sensor}. Expected {req_cols}")
-            data.append(file_data)
+            df = pd.read_csv(file_path, delimiter=";", usecols=req_cols)
+            if not set(req_cols).issubset(df.columns):
+                raise ValueError(f"[PolarVerityLoader] {file_path} is missing required columns for sensor: {sensor}. Expected {req_cols}")
+            dataframes.append(df)
+
+        if not dataframes:
+            return pd.DataFrame()
         
-        return pd.concat(data, ignore_index=True)
+        return pd.concat(dataframes, ignore_index=True)
     
-    def standardise(self, sensor_type, data):
+    def standardise(self, sensor_type: str, data: pd.DataFrame) -> pd.DataFrame:
         """
         Standardise Polar Verity Sense data
         """
