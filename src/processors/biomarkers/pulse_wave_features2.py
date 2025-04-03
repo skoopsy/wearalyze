@@ -254,6 +254,155 @@ class FeatureExtractorDydx(FeatureExtractor):
         return {'detected': False}
 
 
+class FeatureExtractorD2ydx2(FeatureExtractor):
+    """
+     Extract features from the second derivative (d2ydx2) of a PPG signal 
+    """
+    def compute_features(self, beat: pd.DataFrame, **kwargs) -> dict:
+        # Get dydx features (prerequisit) - maybe try except
+        dydx_features = kwargs.get('features_dydx'. {}).get('dydx', {})
+        
+        # Check ms exists otherwise cant do anything
+        if dydx_features.get('ms') is None:
+            return {'d2ydx2': {'detected': False}}
+        
+        # Set stuff, should these be instance variables? maybe
+        features = {'detected': True}
+        ms_idx_local = dydx_features['ms']
+        sig_d2ydx2 = beat['sig_2deriv'].values
+        #TODO: replace beat with timestamps = beat['timestamp_ms] as this is all that is extracted in below functs
+    
+        features['zero_crossings'] = ZeroCrossingAnalyser.compute_zero_crossings(
+            signal=sig_d2ydx2,
+            timestamp=beat['timestamp_ms'].values,
+            crossing_type='both'
+        )
+        
+        features['a_wave'] = self._compute_a_wave(beat, sig_d2ydx2, ms_idx_local)
+        features['b_wave'] = self._compute_b_wave(beat, sig_d2ydx2, features['a_wave'])
+        features['e_wave'] = self._compute_e_wave(beat, sig_d2ydx2, ms_idx_local)
+        features['c_wave'] = self._compute_c_wave(beat, sig_d2ydx2, features['b_wave'], features['e_wave'])
+        features['d_wave'] = self._compute_d_wave(beat, sig_d2ydx2, features['c_wave'], features['e_wave'])
+        features['f_wave'] = self._compute_f_wave(beat, sig_d2ydx2, features['e_wave'])
+
+        return {'d2ydx2': features}
+
+
+    def _compute_a_wave(self, beat: pd.DataFrame, sig_d2ydx2: np.ndarray, ms_idx_local: int) -> dict:
+        """
+        a wave - Max d2ydx2 prior to ms from dydx
+        """
+        
+        if ms_idx_local is not None and  ms_idx_local > 0:
+            region = sig_d2ydx2[:ms_idx_local]
+            peaks = ZeroCrossingAnalyser.local_maxima(region)
+            if peaks:
+                a_idx = int(peaks[np.argmax(region[peaks])])
+                #TODO: Double check that the idx here is not shifted because dydx and d2ydx compared to y. Does it need padding? There will be NaNs
+                return {
+                    'detected': True,
+                    'idx_local': a_idx,
+                    'value': region[a_idx],
+                    'time': beat['timestamp_ms'].iloc[a_idx]
+                }
+        
+        return ('detected': False)
+
+    def _compute_b_wave(self, beat: pd.DataFrame, sig_d2ydx2: np.ndarray, a_wave: dict) -> dict:
+        """
+        b wave - First local minima after a wave
+        """
+        
+        if a_wave['detected'] is True and a_wave['idx_local'] < len(sig_d2ydx2) -1:
+            region = sig_d2ydx2[a_wave['idx_local'] + 1:]
+            minima = ZeroCrossingAnalyser.local_minima(region)
+            if minima:
+                idx_local = int(minima[0] + a_wave['idx_local'] + 1)
+
+                return {
+                    'detected': True,
+                    'idx_local': idx_local,
+                    'value': sig_d2ydx2[idx_local],
+                    'time': beat['timestamp_ms'].iloc[idx_local]
+                }
+
+        return {'detected': False }
+
+
+    def _compute_c_wave(self, beat: pd.DataFrame, sig_d2ydx2: np.ndarray, b_wave: dict, e_wave: dict) -> dict:
+        """
+        c wave - Greatest maxima between b-wave and e-wave, if no max then 1st
+                 of the 1st max on dydx after e or first min on d3ydx3 after e
+        """
+    
+        if b_wave['detected'] is True and e_wave['detected'] is True:
+            start = b_wave['idx_local']
+            end = e_wave['idx_local']
+            region = sig_d2ydx2[start:end]
+
+            if len(region) > 0:
+                peaks = ZeroCrossingAnalyser.local_maxima(region)
+                
+                if peaks:
+                    idx_local = int(peaks[np.argmax(region[peaks])] + start)
+
+                    return {
+                        'detected': True,
+                        'idx_local': idx_local,
+                        'value': sig_d2ydx2[idx_local],
+                        'time': beat['timestamp_ms'].iloc[idx_local]
+                    }
+
+        return {'detected': False }
+
+
+    def _compute_d_wave(self, beat: pd.DataFrame, sig_d2ydx2: np.ndarray, c_wave: dict, e_wave: dict) -> dict:
+        """
+        d wave - Lowest minima on s2ydx2 after c-wave and before e-wave.
+                 If no minima then coincident with c-wave
+        """
+        if c_wave['detected'] is True and e_wave['detected'] is True:          
+            start = c_wave['idx_local']
+            end =  e_wave['idx_local']
+            region = sig_d2ydx2[start:end]
+            
+            if len(region) > 0:
+                minima = ZeroCrossingAnalyser.local_minima(region)
+                
+                if minima:
+                    idx_local = int(minima[np.argmin(region[minima])] + start)
+                    
+                    return {
+                        'detected': True,
+                        'idx_local': idx_local,
+                        'value': sig_d2ydx2[idx_local]
+                        'time': beat['timestamp_ms'].iloc[idx_local]
+                    }
+            
+        return {'detected': False}
+
+
+    def _compute_f_wave(self, beat: pd.DataFrame, sig: np.ndarray, e_wave: dict) -> dict:
+        """
+        f wave - 1st local minimum of d2ydx2 after e and before 0.8T
+        """
+        #TODO: Add 0.8T check
+        if e_wave['detected'] is True and e_wave['idx_local'] < len(sig_d2ydx2) -1:
+            region = sig_d2ydx2[e_wave['idx_local'] + 1:]
+            minima = ZeroCrossingAnalyser.local_minima(region)
+            
+            if minima:
+                idx_local = int(minima[0] + e_wave['idx_local'] + 1)
+                
+                return {
+                    'detected': True,
+                    'idx_local': sig_d2ydx2[idx_local],
+                    'time': beat['timestamp_ms'].iloc[idx_local]
+                }        
+
+        return {'detected': False}
+
+
 class PulseWaveFeatures:
     """
     Class to orchestrate computation of PPG pulse-wave features including:
