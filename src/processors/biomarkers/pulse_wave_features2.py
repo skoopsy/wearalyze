@@ -9,7 +9,7 @@ from abc import ABC, abstractmethod
 
 class ZeroCrossingAnalyser:
     """
-    For zero-crossing, local maxima and minima calculations
+    Static methods for zero-crossing, local maxima, and minima calculations
     """
 
     @staticmethod
@@ -86,6 +86,172 @@ class ZeroCrossingAnalyser:
         peaks, _ = find_peaks(-signal, prominence=prominence, distance=min_peak_dist)
 
         return peaks.tolist()
+
+
+class FeatureExtractor(ABC):
+    """
+    Abstract base class for all the feature extraction classes here
+    """
+    
+    @abstractmethod
+    def compute_features(self, beat: pd.DataFrame, **kwargs) -> dict:
+        """
+        return features of beat
+        """
+        pass
+
+
+class FeatureExtractorY(FeatureExtractor):
+    """
+    Extract features from time series PPG data that has been preprocessed
+    and appropriately smoothed
+    """
+    
+    #TODO: 'filtered_value' vs 'sig_smooth' - In one sense having systole from both is useful because it could be a way to validate the signal smoothing, although least squares does this better, the systole is the output so comparing outputs could be nice. Secondly, probably should incorperate a way to specify the input column to compute y features from.
+
+    def compute_features(self, beat: pd.DataFrame, **kwargs) -> dict:
+        features = {
+            'systole': self._compute_systole(beat),
+            'beat_duration': self._compute_beat_duration(beat)
+        }
+
+        return {'y': features}
+
+
+    def _compute_systole(self, beat: pd.DataFrame) -> dict:
+        """
+        Compute systole peak information from ppg (y) vs time signal
+        """
+        systole_idx_local = int(np.argmac(beat['filtered_value'].values))
+        systole_idx_global = beat['filtered_value'].idxmax()
+        systole_timestamp_global = beat.loc[systole_idx_global, 'timestamp_ms']
+        
+        return {
+            'idx_local': systole_idx_local,
+            'idx_global': systole_idx_global,
+            'time': systole_timestamp_global
+        }
+
+
+    def _compute_beat_duration(self, beat: pd.DataFrame) -> float:
+        """
+        Compute beat duration based on timestamp
+        """
+
+        if len(beat) > 1:
+            return beat['timestamp_ms'].iloc[-1] - beat['timestamp_ms'].iloc[0]
+        
+        #else
+        return np.nan
+
+
+class FeatureExtractorDydx(FeatureExtractor):
+    """
+    Extract features from the first derivative (dydx) of a PPG signal
+    """
+
+
+    def compute_features(self, beat: pd.DataFrame, **kwargs) -> dict:
+        features = {'detected': True}
+        sig_dydx = beat['sig_1deriv']
+        
+        if len(beat) < 2 or sig_dydx.isna().sum() > 0.5 * len(sig_dydx):
+            return {'dydx': self._set_features_not_detected()}
+
+        features['zero_crossings'] = self._compute_zero_crossings(beat)
+        features['ms'] = self._compute_feature_ms(sig_dydx)
+        features['systole'] = self._compute_feature_systole(features, beat)
+        features['diastole'] = self._compute_feature_diastole(features, beat)
+        features['sys-dia-deltaT_ms'] = self._compute_feeature_sys_dia_deltaT_ms(features, beat)
+
+        return {'dydx': features}
+
+
+    def _set_features_not_detected(self) -> dict:
+        return {
+            'detected': False,
+            'ms': None,
+            'systole': {'detected': False}
+            'diastole': {'detected': False}
+        }
+    
+
+    def _compute_zero_crossings(self, beat: pd.DataFrame) -> dict:
+        """
+        Compute pos 2 neg zero crossings for 1st derivative
+        """
+        return ZeroCrossingAnalyser.compute_zero_crossings(
+            signal=beat['sig_1deriv'].values,
+            timestamps=beat['timestamp_ms'].values,
+            crossing_type="pos2neg"
+        )
+
+
+    def _compute_feature_ms(self, sig) -> int:
+        """
+        ms = Max upslope gradient of the systole peak
+        """ 
+        ms_idx_local = np.nanargmax(sig_dydx.values)
+        ms_idx_global = sig_dydx.idxmax() # Not used yet
+
+        return ms_idx_local
+
+
+    def _compute_feature_systole(self, features:dict, beat: pd.DataFrame) -> dict:
+        """
+        Systole - 1st p2n zero-crossing after ms feature        
+        """
+        zc = features['zero_crossings']
+        ms = features['ms']
+
+        zc_after_ms = [idx for idx in zc['idxs'] if idx > ms]
+        if zc_after_ms:
+            first_zc = zc_after_ms[0]
+            position = zc['idxs'].index(first_zc)
+        
+            return {
+                'detected': True
+                'idx_local': first_zc,
+                'time': zc['times'][position]
+            }
+
+        return {'detected': False}
+
+
+    def _compute_feature_diastole(self, features: dict, beat: pd.DataFrame) -> dict:
+        """
+        Diastole - 2nd p2n zero-crossing after ms
+        """
+        zc = features['zero_crossings']
+        ms = features['ms']
+        zc_after_ms = [idx for idx in zc['idxs'] if idx > ms]
+        if len(zc_after_ms) >= 2:
+            second_zc = zc_after_ms[1]
+            position = zc['idxs'].index(second_zc)
+
+            return {
+                'detected': True,
+                'idx_local': second_zc,
+                'time': zc['times'][position]
+            }
+
+        return {'detected': False}
+
+
+    def _compute_feature_sys_dia_deltaT_ms(self, features: dict, beat: pd.DataFrame) -> dict:
+        """
+        sys-dia deltaT ms = time difference between systole and diastole peak
+                            in miliseconds.
+        """
+        if features['systole'].get('detected') and features['diastole'].get('detected'):
+            duration = features['diastole']['time'] - features['systole']['time']
+            
+            return {
+                'detected': True
+                'duration': duration
+            }
+                
+        return {'detected': False}
 
 
 class PulseWaveFeatures:
