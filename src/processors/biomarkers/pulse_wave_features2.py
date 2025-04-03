@@ -505,47 +505,41 @@ class FeatureExtractorD4ydx4(FeatureExtractor):
 
 class PulseWaveFeatures:
     """
-    Class to orchestrate computation of PPG pulse-wave features including:
-        - raw signal features (y)
-        - first-derivative features (dydx)
-        - second-derivative features (d2ydx2)
-        - third-derivative features (d3ydx3)
-
-    Attributes:
-        data (pd.DataFrame): df with 'timstamp_ms', 'global_beat_index',
-                            'filtered_value' columns
+    Orchestrator for extracting pulse wave features from PPG signals
+        
+        1. Sort data
+        2. Applies signal smoothing - smooth functions 
+        3. Computes derivatives
+        4. Extracts beat-level features using modular extractors
     """
 
-    def __init__(self, data):
-        # Time series df input
+    def __init__(self, data: pd.DataFrame):
         self.data = data.copy()
+        self.f_extractor_y = FeatureExtractorY()
+        self.f_extractor_dydx = FeatureExtractorDydx()
+        self.f_extractor_d2ydx2 = FeatureExtractorD2ydx2()
+        self.f_extractor_d3ydx3 = FeatureExtractorD3ydx3()
+        self.f_extractor_d4ydx4 = FeatureExtractorD4ydx4()
+
     
-
-    def compute(self):
+    def compute(Self) -> (pd.DataFrame, pd.DataFrame):
         """
-        Main pipeline to compute:
-            - Smoothed signal via functional or smoothing methods
-            - 1st, 2nd, & 3rd derivatives
-            - Beat-level features / fiducials
+        Run complete pipeline for extracting all pulse wave features
 
-        Returns:
-            (pd.DataFrame, pd.DataFrame):
-                - self.data: self.data with additional columns
-                - beats_features: df of beat-level features (row per beat, col per feature set)
-        """ 
-        # Sort data just incase
-        self.data = self.data.sort_values(by=['global_beat_index', 'timestamp_ms'])
-        
-        # Signal smoothing
+        Return:
+            tuple: (df with processed signals, beat-level features)
+        """
+        self._sort_data()
         self._apply_signal_smoothing()
+        self._compute_derivatives()
+        beat_features = self._extract_beat_features()
         
-        # Compute derivatives
-        self._compute_derivatives()        
-        
-        # Built beat-level features dataframe
-        beats_features = self.create_beats_features()
+        return self.data, beat_features
 
-        return self.data, beats_features
+
+    def _sort_data(self):
+        self.data.sort_values(by=['global_beat_index', 'timestamp_ms']i, inplace=True)
+
 
     def _apply_signal_smoothing(self):
         """
@@ -558,15 +552,16 @@ class PulseWaveFeatures:
             Modifies the self.data df in place by adding the output column.
 
         """
+        from .signal_smoothing import SignalSmoothing
         smoother = SignalSmoothing(
             data=self.data,
-            signal_col="filtered_value",
-            group_col="global_beat_index",
-            output_col="sig_smooth"
+            signal_col='filtered_value',
+            group_col='global_beat_index',
+            output_col='sig_smooth'
         )
         
-        # Apply smoothing on a beat by beat basis via groupby method
         smoother.group_apply(method="fda_bspline", n_basis=21, order=4)
+
 
     def _compute_derivatives(self):
         """
@@ -574,319 +569,51 @@ class PulseWaveFeatures:
         
         Returns:
             Nothing, the columns are added inplace of the parent class self.data df
-        """
-        calculator = DerivativesCalculator( data = self.data,
-                                            time_col = 'timestamp_ms',
-                                            signal_col = 'sig_smooth',
-                                            group_col = 'global_beat_index'
+        """ 
+        from .derivatives_calculator import DerivativesCalculator
+        calculator = DerivativesCalculator(
+            data = self.data,
+            time_col='timestamp_ms',
+            signal_col='sig_smooth',
+            group_col='global_beat_index'
         )
+
         calculator.compute_first_derivative()
         calculator.compute_second_derivative()
         calculator.compute_third_derivative()
 
-    def create_beats_features(self) -> pd.DataFrame:
+
+    def _extract_beat_features(self) -> pd.DataFrame:
         """
         Computes beat-level features and returns them in a new DataFrame
 
         Returns:
             pd.DataFrame: Each row is a beat_id, columns are feature dictionaries or features
         """
-        all_beats_features = []
-
-        for global_beat_index, beat_data in self.data.groupby('global_beat_index'):
-            
-            # Initiate features dict for beat
-            beat_features = {'global_beat_index': global_beat_index}
-
-            # Compute features
-            y_features = self.compute_features_y(beat_data)
-            dydx_features = self.compute_features_dydx(beat_data)
-            d2ydx2_features = self.compute_features_d2ydx2(beat_data,
-                                                           dydx_features
-            )
-            """
-            d3ydx3_features = self.compute_features_d3ydx3(beat_data,
-                                                           dydx_features,
-                                                           d2ydx2_features
-            )
-            """
-            
-            # Collect in beat_features dict
-            try:
-                beat_features.update(y_features)
-                beat_features.update(dydx_features)
-                beat_features.update(d2ydx2_features)
-                #beat_features.update(d3ydx3_features)
-            except TypeError:
-                continue
-
-            # Add beat features as row in beats_features            
-            all_beats_features.append(beat_features)
-
-        return pd.DataFrame(all_beats_features)
-
-
-    def compute_features_y(self, beat: pd.DataFrame) -> dict:
-        """
-        Compute features from timeseries data that has been smoothed/filtered
-        
-        Args:
-            beat (pd.DataFrame): data for current beat
-
-        Returns:
-            dict: {'y': {...}} containing features from y
-        """
-        #TODO: 'filtered_value' vs 'sig_smooth' - In one sense having systole from both is useful because it could be a way to validate the signal smoothing, although least squares does this better, the systole is the output so comparing outputs could be nice. Secondly, probably should incorperate a way to specify the input column to compute y features from.
-
-        # Systolic peak
-        systole_idx_local = beat['filtered_value'].values.argmax() # Argmax (local)
-        systole_idx_global = beat['filtered_value'].idxmax() # Argmax (glbal df index) 
-        systole_time = beat['timestamp_ms'].loc[systole_idx_global] #TODO: maybe this should be systole_time_global as global timstamp needed to comapre to the next beat, but there may be local time needed for other beat features, keep in mind for other feature computations later
-
-        # Beat duration
-        beat_duration = (
-            beat['timestamp_ms'].iloc[-1] - beat['timestamp_ms'].iloc[0]
-            if len(beat) > 1 else np.nan
-        )
-
-        feature_dict = {
-            'y': {
-                'systole': {
-                    'idx_local': systole_idx_local,
-                    'idx_global': systole_idx_global,
-                    'time': systole_time
-                },
-                'beat_duration': beat_duration
-            }
-        }
-        
-        return feature_dict
-
-    def compute_features_dydx(self, beat: pd.DataFrame) -> dict:
-        """
-        Compute features from the first derivative (dydx) of a PPG signal
-
-        Args:
-            beat (pd.DataFrame): data for current beat
-        
-        Returns:    
-            dict: {'dydx':{...}} with dydx features.
-        """
-        features_dict = {'detected': True}
-        
-        if len(beat) < 2:
-            # Not enough points for useful derivative
-            features_dict.update({
-                'detected': False,
-                'ms': None,
-                'systole': {'detected': False},
-                'diastole': {'detected': False}
-            })
-            return {'dydx': features_dict}
-
-        # Feature: ms - Max upslope of systole index       
-        try:
-            if sum(beat['sig_1deriv'].isna()) > 0.5*len(beat['sig_1deriv']):
-                features_dict['detected'] = False
-                ms_idx_global = None
-                ms_idx_local = None
-                features_dict['ms'] = None
-            else:
-                ms_idx_global = beat['sig_1deriv'].idxmax()
-                ms_idx_local = np.nanargmax(beat['sig_1deriv'].values)
-                features_dict['ms'] = ms_idx_local
-        except ValueError or TypeError:
-            # if values are NaN
-            features_dict['detected'] = False
-            ms_idx_global = None
-            ms_idx_local = None
-            features_dict['ms'] = None
-
-        if ms_idx_local is not None:
-            # Compute zero-crossing points in dydx
-            zero_cross = self._compute_zero_crossings_dict(
-                beat, sig_name='sig_1deriv', crossing_type="pos2neg"
-            )
-            features_dict['zero_crossings'] = zero_cross
-
-        # Feature: Systole - 1st p2n zero-crossing after ms
-        if ms_idx_local is not None and zero_cross['sum'] > 0: 
-            zc_after_ms = [zc for zc in zero_cross['idxs'] if zc > ms_idx_local]
-            if len(zc_after_ms) > 0:
-                first_zc_idx_local = zc_after_ms[0]
-                original_pos = zero_cross['idxs'].index(first_zc_idx_local)
-                systole_time = zero_cross['times'][original_pos]
-
-                features_dict['systole'] = {
-                    'detected': True,
-                    'time': systole_time,
-                    'idx_local': first_zc_idx_local
-                }
-            else:
-                features_dict['systole'] = {'detected': False}
-        else:
-            features_dict['systole'] = {'detected': False}
-
-        # Feature: Diastole - 2nd p2n zero-crossing after ms
-        if ms_idx_local is not None and zero_cross['sum'] > 1:
-            zc_after_ms = [zc for zc in zero_cross['idxs'] if zc > ms_idx_local]
-            if len(zc_after_ms) >= 2:
-                second_zc_idx_local = zc_after_ms[1]
-                original_pos_2 = zero_cross['idxs'].index(second_zc_idx_local)
-                diastole_time = zero_cross['times'][original_pos_2]
-
-                features_dict['diastole'] = {
-                    'detected': True,
-                    'time': diastole_time,
-                    'idx_local': second_zc_idx_local
-                }
-
-                # Systole-Diastole Delta Time
-                if features_dict['systole']['detected']:
-                    deltaT = diastole_time - features_dict['systole']['time']
-                    features_dict['sys-dia-deltaT_ms'] = deltaT
-            else: 
-                features_dict['diastole'] = {'detected': False}
-        else:
-            features_dict['diastole'] = {'detected': False}
-
-        return {'dydx': features_dict}
-
-
-    def compute_features_d2ydx2(self, 
-                                beat: pd.DataFrame,
-                                features_dydx: dict) -> dict:
-        """
-        Compute features from the second derivative (d2ydx2) of PPG like:
-        a, b, c, d, e, & f waves. This uses fiducials from features calculated 
-        from running compute_features_dydx() such as ms_idx.
-        """
-        features_dict = {'detected': True}
-
-        if features_dydx['dydx']['ms'] is None:
-            features_dict['detected'] = False
-            return
-
-        # Get ms_idx from dydx features
-        ms_idx_local = features_dydx['dydx'].get('ms', None)
-        deltaT = features_dydx['dydx'].get('sys-dia-deltaT_ms', None)
-
-        # Compute zero-crossings, not sure if i need these yet
-        zero_cross = self._compute_zero_crossings_dict( beat,
-                                                        sig_name='sig_2deriv', 
-                                                        crossing_type='both'
-        )
-        features_dict['zero_crossings'] = zero_cross
-
-        # Get beat start and duration
-        beat_start = beat['timestamp_ms'].iloc[0]
-        beat_end = beat['timestamp_ms'].iloc[-1]
-        beat_duration = beat_end - beat_start
-
-        # Set d2ydx2 signal to dedicated series variable
-        sig_d2ydx2 = beat['sig_2deriv'].values
-
-        # a wave - max d2ydx2 prior to ms from dydx
-        a_idx_local = None
-        a_val = None
-
-        if ms_idx_local is not None and ms_idx_local > 0:
-
-            a_region = sig_d2ydx2[:ms_idx_local]
-            a_peaks = self._local_maxima(a_region)
-            
-            if a_peaks:
-                a_idx_local = int(a_peaks[np.argmax(a_region[a_peaks])])
-                a_val = a_region[a_idx_local]
-
-        features_dict['a_wave'] = {
-            'idx_local': a_idx_local,
-            'value': a_val,
-            'time': beat['timestamp_ms'].iloc[a_idx_local] if a_idx_local is not None else None 
-        }                 
-
-        
-        # b wave - first local minima after a
-        b_idx_local = None
-        b_val = None
-        
-        if a_idx_local is not None and a_idx_local < len(sig_d2ydx2) - 1:
-            b_region = sig_d2ydx2[a_idx_local + 1 :]
-            b_mimima = self._local_minima(b_region, prominence=0.1, min_peak_dist=2)
-        features_dict['b_wave'] = {
-            'idx_local': 1,
-            'value': 1,
-            'time': beat['timestamp_ms'].iloc[a_idx_local] if a_idx_local is not None else None 
-        } 
-        # e wave - 2nd maxima of d2ydx2 after ms and before 0.6T, unless c is inflection point, in which case take first maximum
-        features_dict['e_wave'] = {
-            'idx_local': 1,
-            'value': 1,
-            'time': beat['timestamp_ms'].iloc[a_idx_local] if a_idx_local is not None else None 
-        } 
-
-        # c wave - greatest max between b and e, if no max then 1st of the 1st max on dydx after e or first min on d3ydx3 after e
-        features_dict['c_wave'] = {
-            'idx_local': 1,
-            'value': 1,
-            'time': beat['timestamp_ms'].iloc[a_idx_local] if a_idx_local is not None else None 
-        } 
-        # d wave - lowest min on d2ydx2 after c and before e (if no minima then coincident with c)
-        features_dict['d_wave'] = {
-            'idx_local': 1,
-            'value': 1,
-            'time': beat['timestamp_ms'].iloc[a_idx_local] if a_idx_local is not None else None 
-        } 
-        # f wave - 1st local minium of d2ydx2 after e and before 0.8T
-
-
-        return {'d2ydx2': features_dict}
-
-
-    def compute_features_d3ydx3(self, beat: pd.DataFrame) -> dict:
-         
-        features_dict = {}
-        
-         #TODO modify compute_zero_cross to label p2n and n2p in both method.
-
-
-        # Early Systolic Component P0
-        
-        # Middle Systolic Component P1
-        # p1 can be identified by searching for the first local maximum of the third derivative after the occurrence of the b-wave in the SDPPG,
-        # The first local maximum of x′′′ after b. (10.1088/1361-6579/aabe6a)
  
-        # Middle Systolic Component P2
-        # a candidate p2 can be identified as the last local minimum of the third derivative before the d-wave, or as the local maximum of the original PPG between this candidate and the appearance of the dicrotic notch
-        # Identify a candidate p2 at the last local minimum of x′′′ before d (unless c = d, in which case take the first local minimum of x′′′ after d). If there is a local maximum of x between this candidate and dic then use this instead. (10.1088/1361-6579/aabe6a)
-        
-        
-        # End systolic component P3
+        features_list = []
 
-        # Early Diastolic Component P4
+        for beat_idx, beat in self.data.groupby('global_beat_index'):
+            #TODO: Need to check this is actually the global beat index
+            beat_features = {'global_beat_index': beat_idx}
 
-         
-        # Assign to a value for combination into larger dict 
-        features_dict_categorised = {
-            "d3ydx3": features_dict
-        }
-        
-        return {'d3ydx3': features_dict}
+            features_y = self.f_extractor_y.compute_features(beat)
+            beat_features.update(features_y) 
 
+            features_dydx = self.f_extractor_dydx.compute_features(beat)
+            beat_features.update(features_dydx)
 
-    def compute_feautes_d4ydx4(self, beat: pd.DataFrame) -> dict:
+            features_d2ydx2 = self.f_extractor_d2ydx2.compute_features(beat)
+            beat_features.update(features_d2ydx2)
 
-        #4th deriv: https://pmc.ncbi.nlm.nih.gov/articles/PMC9280335/pdf/fpubh-10-920946.pdf
-        features_dict = {}
+            features_d3ydx3 = self.f_extractor_d3ydx3.compute_features(beat)
+            beat_features.update(features_d3ydx3)
 
-        # Early Systolic Component q1
+            features_d4ydx4 = self.f_extractor_d4ydx4.compute_features(beat)
+            beat_features.update(features_d4ydx4)
 
-        # Middle Systolic Components q2, q3
-        
-        # End Diastic component q4
+            features_list.appened(beat_features)
 
-        return {'d4ydx4': features_dict}
-
-
-   
-   
+        return pd.DataFrame(features_list)
+            
+  
