@@ -98,7 +98,7 @@ class SignalSmoothing:
                 return pd.Series([pd.NA] * len(group), index=group.index)
 
         # Apply smoothing method and store results in a new column
-        smoothed_results = self.data.groupby(self.group_col, group_keys=False).apply(
+        smoothed_results = self.data.groupby(self.group_col).apply(
             lambda group: apply_method(group)
         ).reset_index(level=0, drop=True)
 
