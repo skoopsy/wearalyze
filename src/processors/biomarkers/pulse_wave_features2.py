@@ -62,6 +62,32 @@ class ZeroCrossingAnalyser:
         }
 
 
+    @staticmethod
+    def local_maxima(signal: np.ndarray, 
+                     prominence: float = 0.1, 
+                     min_peak_dist: int = 1
+    ) -> list:
+        """
+        Return max idxs from 1D signal using scipy find_peaks
+        """ 
+        peaks, _ = find_peaks(signal, prominence=prominence, distance=min_peak_dist)
+        
+        return peaks.tolist()
+
+
+    @staticmethod
+    def local_minima(signal: np.ndarray,
+                     prominence: float = 0.1,
+                     min_peak_dist: int = 1
+    ) -> list:
+        """
+        Return min idxs from 1D signal using scipy find peaks
+        """
+        peaks, _ = find_peaks(-signal, prominence=prominence, distance=min_peak_dist)
+
+        return peaks.tolist()
+
+
 class PulseWaveFeatures:
     """
     Class to orchestrate computation of PPG pulse-wave features including:
@@ -448,15 +474,4 @@ class PulseWaveFeatures:
 
 
    
-    
-    def _local_maxima(self, signal, prominence: float = 0.1, min_peak_dist: int = 1) -> list:
-        """ Return maximum from a 1D signal using scipy find_peaks """    
-        peaks, _ = find_peaks(signal, prominence=prominence, distance=min_peak_dist)
-        
-        return peaks.tolist()
-
-    def _local_minima(self, signal: list, prominence: float = 0.1, min_peak_dist: int = 1) -> list:
-        """ Returns minimum indice from 1D signal using scipy find_peaks """
-        peaks, _ = find_peaks(-signal, prominence=prominence, distance=min_peak_dist)
-        
-        return peaks.tolist()
+   
