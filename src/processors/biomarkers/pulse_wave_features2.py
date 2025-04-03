@@ -5,9 +5,62 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.signal import find_peaks
+from abc import ABC, abstractmethod
 
-#TODO: Refactor into more classes PulseWaveFeatureOrchestrator,FeatureExtractor, ZeroCrossingAnalyser, 
-#TODO: Refactor feature calculations into granular modules for testing.
+class ZeroCrossingAnalyser:
+    """
+    For zero-crossing, local maxima and minima calculations
+    """
+
+    @staticmethod
+    def compute_zero_crossings(signal: np.adarray, 
+                               timestamps: np.ndarray, 
+                               crossing_type: str) -> dict:
+        """
+        Compute zero crossings for a given signal using boolean masks.
+
+        Returns the index of where a signal crosses zero in a specified 
+        direction (from negative to positive, positive to negative, or both). 
+        
+        The returned index will be the data point before or at the zero
+        point as opposed to the data point after the zero-crossing.
+
+        Args:
+            signal (np.ndarray): Input signal
+            timestamps (np.ndarray): Timestamps corresponding to the signal
+            crossing_type (str): "pos2neg", "neg2pos", "both"
+
+        Returns:
+            dict: Contains the indices, times, and count of zero crossings
+        """
+         # Make sure input signal is in np.array form,  > will do it implicitly
+        if not isinstance(signal, np.ndarray):
+            signal = np.array(signal) 
+        
+        pos = signal > 0
+        neg = ~pos
+
+        if crossing_type == "pos2neg":
+            idxs = np.where(pos[:-1] & neg[1:])[0]
+
+        elif crossing_type == "neg2pos":
+            idxs = np.where(neg[:-1] & pos[1:])[0] 
+
+        elif crossing_type == "both":
+            idxs = np.where((pos[:-1] & neg[1:]) | (neg[:-1] & pos[1:]))[0]
+        
+        else:
+            raise ValueError(f"Invalid crossing_type: {crossing_type}."
+                              "Please use 'pos2neg', 'neg2pos', or 'both'."
+            )
+
+        return {
+            "sum": len(idxs),
+            "type": crossing_type,
+            "times": list(timestamps[idxs]),
+            "idxs": list(idxs)
+        }
+
 
 class PulseWaveFeatures:
     """
@@ -394,89 +447,7 @@ class PulseWaveFeatures:
         return {'d4ydx4': features_dict}
 
 
-    def _compute_zero_crossings_dict(self, beat: pd.DataFrame, sig_name: str, crossing_type: str) -> dict:
-        """
-        Uses _find_zero_crossings to collect zero corssing points and add to a
-        nested dict
-
-        Args:
-            sig_name (str): df key for the signal column being analysed
-            crossing_type (str): pos2neg, neg2pos, both
-        Returns:
-            feature_dict (dict): Nested dict of lists zero crossing points
-        """
-        # Zero-crossings
-        zero_crossing_idxs = self._find_zero_crossings(beat[sig_name].values,
-                                                   crossing_type=crossing_type
-        )
-        zero_crossing_times = beat["timestamp_ms"].iloc[zero_crossing_idxs].values
-
-
-        # String shortening for dict key names 
-        if crossing_type == "pos2neg":
-            type_str = "p2n"
-        elif crossing_type == "neg2pos":
-            type_str = "n2p"
-        elif crossing_type == "both":
-            type_str = "both"
-        else:
-            ValueError(f"Invalid crossing_type: {crossing_type}")
-         
-        # Create dict with lists
-        zero_crossings_dict = {
-            "sum": len(zero_crossing_idxs),
-            "type": type_str,
-            "times": list(zero_crossing_times),
-            "idxs": list(zero_crossing_idxs)
-        }
-
-        return zero_crossings_dict
-
-
-    def _find_zero_crossings(self,
-                             signal: np.ndarray,
-                             crossing_type: str) -> np.ndarray:
-        """
-        Returns the index of where a signal crosses zero in a specified 
-        direction (from negative to positive, positive to negative, or both). 
-        
-        The returned index will be the data point before or at the zero
-        point as opposed to the data point after the zero-crossing.
-
-        Args:
-            signal (np.ndarray): input a df[col].values
-            crossing_type (str): Specify zero crossing direction: pos2neg
-                                                                  neg2pos
-                                                                  both
-        
-        Returns:
-            zero_crossings (list(list)): List of zero crossing points with 
-                                         index
-        """    
-        
-        # Make sure input signal is in np.array form,  > will do it implicitly
-        if not isinstance(signal, np.ndarray):
-            signal = np.array(signal)
-        
-        pos = signal > 0
-        neg = ~pos
-
-        if crossing_type == "pos2neg":
-            zero_crossings = np.where(pos[:-1] & neg[1:])[0]
-
-        elif crossing_type == "neg2pos":
-            zero_crossings = np.where(neg[:-1] & pos[1:])[0] 
-
-        elif crossing_type == "both":
-            zero_crossings = np.where(
-                (pos[:-1] & neg[1:]) | (neg[:-1] & pos[1:])
-            )[0]
-        else:
-            raise ValueError(f"Invalid crossing_type: {crossing_type}."
-                              "Please use 'pos2neg', 'neg2pos', or 'both'."
-                            )
-
-        return zero_crossings 
+   
     
     def _local_maxima(self, signal, prominence: float = 0.1, min_peak_dist: int = 1) -> list:
         """ Return maximum from a 1D signal using scipy find_peaks """    
