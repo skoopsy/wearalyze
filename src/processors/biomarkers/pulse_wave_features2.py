@@ -256,7 +256,7 @@ class FeatureExtractorDydx(FeatureExtractor):
 
 class FeatureExtractorD2ydx2(FeatureExtractor):
     """
-     Extract features from the second derivative (d2ydx2) of a PPG signal 
+    Extract features from the second derivative (d2ydx2) of a PPG signal 
     """
     def compute_features(self, beat: pd.DataFrame, **kwargs) -> dict:
         # Get dydx features (prerequisit) - maybe try except
@@ -401,6 +401,106 @@ class FeatureExtractorD2ydx2(FeatureExtractor):
                 }        
 
         return {'detected': False}
+
+
+class FeatureExtractorD3ydx3(FeatureExtractor):
+    """
+    Extract features from the third derivative (d3ydx3) of a PPG signal 
+    """
+    #TODO: Currently placehold stubs
+
+    def compute_features(self, beat: pd.DataFrame, **kwargs) - > dict:
+        features = {
+            'p0': self._compute_p0(beat),
+            'p1': self._compute_p1(beat),
+            'p2': self._compute_p2(beat),
+            'p3': self._compute_p3(beat),
+            'p4': self._compute_p4(beat),
+        }
+
+    def _compute_p0(self, beat: pd.DataFrame):
+        """
+        p0 - Early systolic component
+        """
+        return None
+
+    def _compute_p1(self, beat: pd.DataFrame):
+        """
+        p1 - Middle systolic component
+
+        p1 can be identified by searching for the first local maximum of the 
+        third derivative after the occurrence of the b-wave in the SDPPG, the 
+        first local maximum of x′′′ after b. (10.1088/1361-6579/aabe6a)
+        """
+        return None
+
+    def _compute_p2(self, beat: pd.DataFrame):
+        """
+        p2 - Middle systolic component
+
+        A candidate p2 can be identified as the last local minimum of the third
+        derivative before the d-wave, or as the local maximum of the original
+        PPG between this candidate and the appearance of the dicrotic notch
+        
+        Identify a candidate p2 at the last local minimum of x′′′ before d 
+        (unless c = d, in which case take the first local minimum of x′′′ 
+        after d). If there is a local maximum of x between this candidate and 
+        dic then use this instead. (10.1088/1361-6579/aabe6a)
+        """
+        return None
+
+    def _compute_p3(self, beat: pd.DataFrame):
+        """
+        p3 - End Systolic Component
+        """
+        return None
+
+    def _compute_p4(self, beat: pd.DataFrame):
+        """
+        p4 - Early diastolic component
+        """
+        return None
+
+
+class FeatureExtractorD4ydx4(FeatureExtractor):
+    """
+    Extract features from the fourth derivative (d4ydx4) of a PPG signal 
+    
+    4th deriv: https://pmc.ncbi.nlm.nih.gov/articles/PMC9280335/pdf/fpubh-10-920946.pdf
+    """
+    #TODO: Currently placehold stubs
+
+    def compute_features(self, beat: pd.DataFrame, **kwargs) - > dict:
+        features = {
+            'q1': self._compute_q1(beat),
+            'q2': self._compute_q2(beat),
+            'q3': self._compute_q3(beat),
+            'q4': self._compute_q4(beat),
+        }
+
+    def _compute_q1(self, beat: pd.DataFrame):
+        """
+        q1 - Early systolic component 
+        """
+        return None
+
+    def _compute_q2(self, beat: pd.DataFrame):
+        """
+        q2 - Middle systolic component
+        """
+        return None
+
+    def _compute_q3(self, beat: pd.DataFrame):
+        """
+        q3 - Middle systolic Component
+        """
+        return None
+
+    def _compute_q4(self, beat: pd.DataFrame):
+        """
+        q4 - End diastolic component
+        """
+        return None
 
 
 class PulseWaveFeatures:
