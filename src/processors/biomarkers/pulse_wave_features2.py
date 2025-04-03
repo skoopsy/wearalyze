@@ -13,7 +13,7 @@ class ZeroCrossingAnalyser:
     """
 
     @staticmethod
-    def compute_zero_crossings(signal: np.adarray, 
+    def compute_zero_crossings(signal: np.ndarray, 
                                timestamps: np.ndarray, 
                                crossing_type: str) -> dict:
         """
@@ -33,11 +33,11 @@ class ZeroCrossingAnalyser:
         Returns:
             dict: Contains the indices, times, and count of zero crossings
         """
-         # Make sure input signal is in np.array form,  > will do it implicitly
+        # Make sure input signal is in np.array form,  > will do it implicitly
         if not isinstance(signal, np.ndarray):
             signal = np.array(signal) 
         
-        pos = signal > 0
+        pos = signal >= 0
         neg = ~pos
 
         if crossing_type == "pos2neg":
@@ -122,14 +122,26 @@ class FeatureExtractorY(FeatureExtractor):
         """
         Compute systole peak information from ppg (y) vs time signal
         """
-        systole_idx_local = int(np.argmac(beat['filtered_value'].values))
+        if beat['filtered_value'].empty:
+            return {
+                'detected': False,
+                'idx_local': None,
+                'idx_global': None,
+                'time': None,
+                'time_global': None 
+            }
+
+        systole_idx_local = int(np.argmax(beat['filtered_value'].values))
         systole_idx_global = beat['filtered_value'].idxmax()
+        systole_timestamp_local = beat['timestamp_ms'].iloc[systole_idx_local]
         systole_timestamp_global = beat.loc[systole_idx_global, 'timestamp_ms']
-        
+        #TODO: be careful here you need global time to beat to beat, but maybe local time for interbeat stuff later, check this again! 
         return {
+            'detected': True,
             'idx_local': systole_idx_local,
             'idx_global': systole_idx_global,
-            'time': systole_timestamp_global
+            'time': systole_timestamp_local,
+            'time_global': systole_timestamp_global
         }
 
 
@@ -137,7 +149,7 @@ class FeatureExtractorY(FeatureExtractor):
         """
         Compute beat duration based on timestamp
         """
-
+        
         if len(beat) > 1:
             return beat['timestamp_ms'].iloc[-1] - beat['timestamp_ms'].iloc[0]
         
@@ -154,7 +166,7 @@ class FeatureExtractorDydx(FeatureExtractor):
     def compute_features(self, beat: pd.DataFrame, **kwargs) -> dict:
         features = {'detected': True}
         sig_dydx = beat['sig_1deriv']
-        
+            
         if len(beat) < 2 or sig_dydx.isna().sum() > 0.5 * len(sig_dydx):
             return {'dydx': self._set_features_not_detected()}
 
@@ -162,7 +174,7 @@ class FeatureExtractorDydx(FeatureExtractor):
         features['ms'] = self._compute_feature_ms(sig_dydx)
         features['systole'] = self._compute_feature_systole(features, beat)
         features['diastole'] = self._compute_feature_diastole(features, beat)
-        features['sys-dia-deltaT_ms'] = self._compute_feeature_sys_dia_deltaT_ms(features, beat)
+        features['sys-dia-deltaT_ms'] = self._compute_feature_sys_dia_deltaT_ms(features, beat)
 
         return {'dydx': features}
 
@@ -171,7 +183,7 @@ class FeatureExtractorDydx(FeatureExtractor):
         return {
             'detected': False,
             'ms': None,
-            'systole': {'detected': False}
+            'systole': {'detected': False},
             'diastole': {'detected': False}
         }
     
@@ -187,7 +199,7 @@ class FeatureExtractorDydx(FeatureExtractor):
         )
 
 
-    def _compute_feature_ms(self, sig) -> int:
+    def _compute_feature_ms(self, sig_dydx) -> int:
         """
         ms = Max upslope gradient of the systole peak
         """ 
@@ -210,7 +222,7 @@ class FeatureExtractorDydx(FeatureExtractor):
             position = zc['idxs'].index(first_zc)
         
             return {
-                'detected': True
+                'detected': True,
                 'idx_local': first_zc,
                 'time': zc['times'][position]
             }
@@ -247,7 +259,7 @@ class FeatureExtractorDydx(FeatureExtractor):
             duration = features['diastole']['time'] - features['systole']['time']
             
             return {
-                'detected': True
+                'detected': True,
                 'duration': duration
             }
                 
@@ -260,7 +272,7 @@ class FeatureExtractorD2ydx2(FeatureExtractor):
     """
     def compute_features(self, beat: pd.DataFrame, **kwargs) -> dict:
         # Get dydx features (prerequisit) - maybe try except
-        dydx_features = kwargs.get('features_dydx'. {}).get('dydx', {})
+        dydx_features = kwargs.get('features_dydx', {}).get('dydx', {})
         
         # Check ms exists otherwise cant do anything
         if dydx_features.get('ms') is None:
@@ -274,7 +286,7 @@ class FeatureExtractorD2ydx2(FeatureExtractor):
     
         features['zero_crossings'] = ZeroCrossingAnalyser.compute_zero_crossings(
             signal=sig_d2ydx2,
-            timestamp=beat['timestamp_ms'].values,
+            timestamps=beat['timestamp_ms'].values,
             crossing_type='both'
         )
         
@@ -306,7 +318,7 @@ class FeatureExtractorD2ydx2(FeatureExtractor):
                     'time': beat['timestamp_ms'].iloc[a_idx]
                 }
         
-        return ('detected': False)
+        return {'detected': False}
 
     def _compute_b_wave(self, beat: pd.DataFrame, sig_d2ydx2: np.ndarray, a_wave: dict) -> dict:
         """
@@ -326,7 +338,29 @@ class FeatureExtractorD2ydx2(FeatureExtractor):
                     'time': beat['timestamp_ms'].iloc[idx_local]
                 }
 
-        return {'detected': False }
+        return {'detected': False}
+
+
+    def _compute_e_wave(self, beat: pd.DataFrame, sig_d2ydx2: np.ndarray, ms_idx_local: int) -> dict:
+        """
+        e wave - 2nd maxima of d2ydx2 after ms and before 0.6T, unless c is 
+                 inflection point, in which case take first maximum 
+        """
+        if ms_idx_local is not None and ms_idx_local > 1:
+            region = sig_d2ydx2[ms_idx_local:]
+            peaks = ZeroCrossingAnalyser.local_maxima(region)
+
+            if peaks and len(peaks) >= 2:
+                idx_local = int(peaks[1] + ms_idx_local)
+
+                return {
+                    'detected': True,
+                    'idx_local': idx_local,
+                    'value': sig_d2ydx2[idx_local],
+                    'time': beat['timestamp_ms'].iloc[idx_local]
+                }
+  
+        return {'detected': False}
 
 
     def _compute_c_wave(self, beat: pd.DataFrame, sig_d2ydx2: np.ndarray, b_wave: dict, e_wave: dict) -> dict:
@@ -375,7 +409,7 @@ class FeatureExtractorD2ydx2(FeatureExtractor):
                     return {
                         'detected': True,
                         'idx_local': idx_local,
-                        'value': sig_d2ydx2[idx_local]
+                        'value': sig_d2ydx2[idx_local],
                         'time': beat['timestamp_ms'].iloc[idx_local]
                     }
             
@@ -409,7 +443,7 @@ class FeatureExtractorD3ydx3(FeatureExtractor):
     """
     #TODO: Currently placehold stubs
 
-    def compute_features(self, beat: pd.DataFrame, **kwargs) - > dict:
+    def compute_features(self, beat: pd.DataFrame, **kwargs) -> dict:
         features = {
             'p0': self._compute_p0(beat),
             'p1': self._compute_p1(beat),
@@ -417,6 +451,8 @@ class FeatureExtractorD3ydx3(FeatureExtractor):
             'p3': self._compute_p3(beat),
             'p4': self._compute_p4(beat),
         }
+        
+        return {'d3ydx3': features}
 
     def _compute_p0(self, beat: pd.DataFrame):
         """
@@ -470,13 +506,16 @@ class FeatureExtractorD4ydx4(FeatureExtractor):
     """
     #TODO: Currently placehold stubs
 
-    def compute_features(self, beat: pd.DataFrame, **kwargs) - > dict:
+    def compute_features(self, beat: pd.DataFrame, **kwargs) -> dict:
         features = {
             'q1': self._compute_q1(beat),
             'q2': self._compute_q2(beat),
             'q3': self._compute_q3(beat),
             'q4': self._compute_q4(beat),
         }
+        
+        return {'d4ydx4': features}
+
 
     def _compute_q1(self, beat: pd.DataFrame):
         """
@@ -522,7 +561,7 @@ class PulseWaveFeatures:
         self.f_extractor_d4ydx4 = FeatureExtractorD4ydx4()
 
     
-    def compute(Self) -> (pd.DataFrame, pd.DataFrame):
+    def compute(self) -> (pd.DataFrame, pd.DataFrame):
         """
         Run complete pipeline for extracting all pulse wave features
 
@@ -538,7 +577,7 @@ class PulseWaveFeatures:
 
 
     def _sort_data(self):
-        self.data.sort_values(by=['global_beat_index', 'timestamp_ms']i, inplace=True)
+        self.data.sort_values(by=['global_beat_index', 'timestamp_ms'], inplace=True)
 
 
     def _apply_signal_smoothing(self):
@@ -612,7 +651,7 @@ class PulseWaveFeatures:
             features_d4ydx4 = self.f_extractor_d4ydx4.compute_features(beat)
             beat_features.update(features_d4ydx4)
 
-            features_list.appened(beat_features)
+            features_list.append(beat_features)
 
         return pd.DataFrame(features_list)
             
