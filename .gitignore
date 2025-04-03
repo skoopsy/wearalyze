@@ -161,3 +161,6 @@ cython_debug/
 
 # Ubuntu / WSL
 *.swp
+
+# Vim
+*.swo
