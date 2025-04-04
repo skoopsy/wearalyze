@@ -7,10 +7,10 @@
     "data_source":{
         "subjects_dir": "data/polar/simpreg1/",
         "multi_subjects": true,
-        "subjects_to_load": ["S6","S7","S8","S9","S10"],
+        "subjects_to_load": ["S6","S7"],
         "multi_condition": {
             "status": false,
-            "conditions": ["cond"]
+            "conditions": ["preg"]
         },
 		"device": "polar-verity",
 		"sensor_type": ["ppg"]
